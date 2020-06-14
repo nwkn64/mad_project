@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <data>
+
+        <variable
+            name="item"
+            type="org.dieschnittstelle.mobile.android.skeleton.model.DataItem" />
+
+        <variable
+            name="controller"
+            type="org.dieschnittstelle.mobile.android.skeleton.MainActivity" />
+    </data>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal">
+
+        <CheckBox
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="@{() -> controller.onListItemChanged(item)}"
+            android:checked="@={item.checked}"
+            android:focusable="false" />
+
+        <TextView
+            android:id="@+id/itemId"
+
+            android:layout_width="wrap_content"
+            android:layout_height="70dp"
+            android:padding="10dp"
+            android:text="@{String.valueOf(item.id)}"
+            android:textSize="30dp" />
+
+        <TextView
+            android:id="@+id/itemName"
+            android:layout_width="wrap_content"
+            android:layout_height="70dp"
+            android:padding="10dp"
+            android:text="@{item.name}"
+            android:textSize="30dp" />
+
+
+    </LinearLayout>
+</layout>
