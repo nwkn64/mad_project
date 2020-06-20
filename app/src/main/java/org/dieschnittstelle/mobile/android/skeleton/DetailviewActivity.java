@@ -48,7 +48,6 @@ public class DetailviewActivity extends AppCompatActivity {
 
 
         EditText itemName = binding.getRoot().findViewById(R.id.itemName);
-        // fab.setEnabled(false);
 
         itemName.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override

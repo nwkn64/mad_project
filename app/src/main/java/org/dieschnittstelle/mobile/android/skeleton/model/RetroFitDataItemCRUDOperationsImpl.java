@@ -33,12 +33,17 @@ public class RetroFitDataItemCRUDOperationsImpl implements IDataItemCRUDOperatio
     private TodoWebAPI webAPI;
 
     public RetroFitDataItemCRUDOperationsImpl() {
-        Retrofit apiRoot = new Retrofit.Builder()
-                .baseUrl("http://192.168.0.101:8080/")
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
+        try{
+            Retrofit apiRoot = new Retrofit.Builder()
+                    .baseUrl("http://192.168.0.101:8080/")
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .build();
 
-        webAPI = apiRoot.create(TodoWebAPI.class);
+            webAPI = apiRoot.create(TodoWebAPI.class);
+        } catch(Exception e){
+
+        }
+
 
     }
 

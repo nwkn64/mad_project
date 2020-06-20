@@ -23,6 +23,7 @@ import javax.annotation.Nullable;
 import org.dieschnittstelle.mobile.android.skeleton.databinding.ActivityMainListitemBinding;
 import org.dieschnittstelle.mobile.android.skeleton.model.DataItem;
 import org.dieschnittstelle.mobile.android.skeleton.model.IDataItemCRUDOperations;
+import org.dieschnittstelle.mobile.android.skeleton.model.RoomDataItemCRUDOperationsImpl;
 import org.dieschnittstelle.mobile.android.tasks.CreateDataItemTask;
 import org.dieschnittstelle.mobile.android.tasks.ReadAllDataItemsTask;
 import org.dieschnittstelle.mobile.android.tasks.UpdateDataItemTaskWithFuture;
@@ -50,7 +51,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initialiseView() {
-        this.crudOperations = ((DataItemApplication) getApplication()).getCrudOperations();
+        this.crudOperations = new RoomDataItemCRUDOperationsImpl(this);
 
 
         this.listView = this.findViewById(R.id.listView);

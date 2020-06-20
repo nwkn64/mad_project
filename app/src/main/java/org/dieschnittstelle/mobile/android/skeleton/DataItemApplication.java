@@ -6,6 +6,8 @@ import android.widget.Toast;
 
 import org.dieschnittstelle.mobile.android.skeleton.model.IDataItemCRUDOperations;
 import org.dieschnittstelle.mobile.android.skeleton.model.RetroFitDataItemCRUDOperationsImpl;
+import org.dieschnittstelle.mobile.android.skeleton.model.RoomDataItemCRUDOperationsImpl;
+import org.dieschnittstelle.mobile.android.skeleton.model.RoomDataItemCRUDOperationsImplRoomDataItemDao_Impl;
 
 import java.util.function.Consumer;
 
@@ -23,7 +25,13 @@ public class DataItemApplication extends Application {
     }
 
     public IDataItemCRUDOperations getCrudOperations() {
-        return crudOperations;
+        try {
+            return crudOperations;
+
+        } catch (Exception e) {
+            System.out.println(e);
+            return null;
+        }
     }
 
     public void verifyWebAvailable(Consumer<Boolean> onDone) {
@@ -42,7 +50,7 @@ public class DataItemApplication extends Application {
 
             @Override
             protected void onPostExecute(Boolean available) {
-                Toast.makeText(DataItemApplication.this, "The webapp is running", Toast.LENGTH_LONG).show();
+               // Toast.makeText(DataItemApplication.this, "The webapp is running", Toast.LENGTH_LONG).show();
                 onDone.accept(available);
             }
         }.execute();

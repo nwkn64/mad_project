@@ -35,6 +35,10 @@ android {
 }
 
 dependencies {
+    compile 'com.google.firebase:firebase-core:17.4.3'
+    compile 'com.google.firebase:firebase-database:19.3.0'
+
+    implementation 'com.google.firebase:firebase-database:19.3.0'
     def nav_version = "2.3.0-alpha02"
     def room_version = "2.2.4"
 
@@ -69,4 +73,6 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.0'
 }
+
+apply plugin: 'com.google.gms.google-services'
 

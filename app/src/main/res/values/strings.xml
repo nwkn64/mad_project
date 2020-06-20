@@ -1,6 +1,8 @@
 <resources>
-    <string name="app_name">MAD Demo S20</string>
+    <string name="app_name">MAD Project</string>
     <string name="detailview_name_label">Name</string>
     <string name="detailview_description_label">Description</string>
+    <string name="loginview_email_label">E-Mail address</string>
+    <string name="loginview_password_label">Password</string>
 
 </resources>
