@@ -66,8 +66,6 @@ public class RoomDataItemCRUDOperationsImpl implements IDataItemCRUDOperations {
 
     @Override
     public boolean updateDataItem(DataItem item) {
-        //   item.beforePersist();
-
         if (db.getDao().aktualisiere(item) > 0) {
             return true;
         }

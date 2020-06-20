@@ -1,12 +1,15 @@
 package org.dieschnittstelle.mobile.android.skeleton;
 
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -14,6 +17,7 @@ import androidx.databinding.DataBindingUtil;
 
 
 import com.google.android.material.textfield.TextInputLayout;
+import com.google.android.material.textview.MaterialTextView;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -40,17 +44,44 @@ public class LoginActivity extends AppCompatActivity {
     private static TextInputLayout usernameWrapper;
     private static TextInputLayout passwordWrapper;
 
-    private ProgressBar progressBar;
+    private static ProgressBar progressBar;
+
+    private static MaterialTextView errorMessage;
+    private static DatabaseReference mRootRef = FirebaseDatabase.getInstance().getReference();
+    private static DatabaseReference dbUser = mRootRef.child("user");
 
 
-    DatabaseReference mRootRef = FirebaseDatabase.getInstance().getReference();
-    DatabaseReference dbUser = mRootRef.child("user");
+    DatabaseReference connectedRef = FirebaseDatabase.getInstance().getReference(".info/connected");
 
+    private static Button loginBtn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
 
+
+        connectedRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+
+
+                boolean connected = snapshot.getValue(Boolean.class);
+                if (connected) {
+                    System.out.println("connected");
+                } else {
+
+                    Intent callDetailViewIntentForReturnValue = new Intent(LoginActivity.this, MainActivity.class);
+                    startActivityForResult(callDetailViewIntentForReturnValue, CALL_MAIN_ACTIVITY);
+
+                    System.out.println("not connected");
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.w("123", "Listener was cancelled");
+            }
+        });
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_login);
@@ -59,16 +90,20 @@ public class LoginActivity extends AppCompatActivity {
         this.binding = DataBindingUtil.inflate(getLayoutInflater(), R.layout.activity_login, null, false);
 
         this.progressBar = this.findViewById(R.id.progressBar);
-        this.progressBar.setVisibility(View.INVISIBLE);
+        errorMessage = this.findViewById(R.id.errorwarning);
+        //this.progressBar.setVisibility(View.VISIBLE);
 
-
-        Button loginBtn = findViewById(R.id.loginBtn);
-        usernameWrapper = (TextInputLayout) findViewById(R.id.emailWrapper);
-        passwordWrapper = (TextInputLayout) findViewById(R.id.passwordWrapper);
+        loginBtn = findViewById(R.id.loginBtn);
+        usernameWrapper = findViewById(R.id.emailWrapper);
+        passwordWrapper = findViewById(R.id.passwordWrapper);
 
 
         loginBtn.setOnClickListener((view) -> {
+
+
             this.onLogin();
+
+
         });
 
         usernameWrapper.getEditText().addTextChangedListener(new TextWatcher() {
@@ -81,6 +116,7 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 usernameWrapper.setError(null);
+                errorMessage.setVisibility(View.INVISIBLE);
             }
 
             @Override
@@ -101,6 +137,7 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 passwordWrapper.setError(null);
+                errorMessage.setVisibility(View.INVISIBLE);
 
             }
 
@@ -153,55 +190,73 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     public boolean validateEmail() {
-        matcher = emailPattern.matcher(this.usernameWrapper.getEditText().getText());
+        matcher = emailPattern.matcher(usernameWrapper.getEditText().getText());
         return matcher.matches();
     }
 
     public boolean validatePassword() {
-        matcher = passwordPattern.matcher(this.passwordWrapper.getEditText().getText());
+        matcher = passwordPattern.matcher(passwordWrapper.getEditText().getText());
         return matcher.matches();
     }
 
     private void onLogin() {
-        this.progressBar.setVisibility(View.VISIBLE);
-           Thread newThread = new Thread(() -> {
-            this.dbUser.addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
 
-                    for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
 
-                        System.out.println(LoginActivity.usernameWrapper.getEditText().getText().toString());
+        new AsyncTask<Void, Void, Boolean>() {
 
-                        if (postSnapshot.child("email").getValue().toString().equals(LoginActivity.usernameWrapper.getEditText().getText().toString()) &&
-                                postSnapshot.child("password").getValue().toString().equals(LoginActivity.passwordWrapper.getEditText().getText().toString())) {
-                            Intent callDetailViewIntentForReturnValue = new Intent(LoginActivity.this, MainActivity.class);
-                            startActivityForResult(callDetailViewIntentForReturnValue, CALL_MAIN_ACTIVITY);
+            @Override
+            protected void onPreExecute() {
+                super.onPreExecute();
+                progressBar.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            protected Boolean doInBackground(Void... voids) {
+                try {
+                    Thread.sleep(2000);
+                    LoginActivity.dbUser.addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+
+                            for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
+
+
+                                if (postSnapshot.child("email").getValue().toString().equals(LoginActivity.usernameWrapper.getEditText().getText().toString()) &&
+                                        postSnapshot.child("password").getValue().toString().equals(LoginActivity.passwordWrapper.getEditText().getText().toString())) {
+                                    Intent callDetailViewIntentForReturnValue = new Intent(LoginActivity.this, MainActivity.class);
+                                    startActivityForResult(callDetailViewIntentForReturnValue, CALL_MAIN_ACTIVITY);
+
+                                } else {
+                                    progressBar.setVisibility(View.INVISIBLE);
+
+                                    errorMessage.setVisibility(View.VISIBLE);
+
+                                }
+
+
+                            }
+
 
                         }
 
 
-                    }
-
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError databaseError) {
+                        }
+                    });
+                } catch (Exception e) {
 
                 }
+                return true;
+            }
 
+            @Override
+            protected void onPostExecute(Boolean aBoolean) {
+                super.onPostExecute(aBoolean);
+                progressBar.setVisibility(View.INVISIBLE);
 
-                @Override
-                public void onCancelled(@NonNull DatabaseError databaseError) {
-                }
-            });
-        });
-        try {
-            Thread.sleep(2000);
-
-        } catch (Exception e) {
-
-        }
-
-        newThread.start();
-
-
+            }
+        }.execute();
 
 
     }
