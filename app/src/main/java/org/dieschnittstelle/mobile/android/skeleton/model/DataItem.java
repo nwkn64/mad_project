@@ -31,6 +31,7 @@ public class DataItem implements Serializable {
     @SerializedName("done")
     private boolean checked;
 
+    //private  boolean favourite;
 
     @Ignore
     private List<String> contacts = new ArrayList<>();
@@ -69,6 +70,10 @@ public class DataItem implements Serializable {
     public void setChecked(Boolean checked) {
         this.checked = checked;
     }
+
+    //public Boolean getFavourite () { return favourite; }
+
+    //public void setFavourite(Boolean favourite) { this.favourite = favourite; }
 
     public String getDescription() {
         return description;

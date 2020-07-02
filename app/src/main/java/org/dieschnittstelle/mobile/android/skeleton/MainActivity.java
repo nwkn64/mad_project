@@ -28,6 +28,9 @@ import org.dieschnittstelle.mobile.android.skeleton.model.RoomDataItemCRUDOperat
 import org.dieschnittstelle.mobile.android.tasks.CreateDataItemTask;
 import org.dieschnittstelle.mobile.android.tasks.ReadAllDataItemsTask;
 import org.dieschnittstelle.mobile.android.tasks.UpdateDataItemTaskWithFuture;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -36,6 +39,8 @@ public class MainActivity extends AppCompatActivity {
 
     private ViewGroup listView;
     private ArrayAdapter<DataItem> listViewAdapter;
+    //neue Liste die sortiert werden kann
+    private List<DataItem> itemsList =new ArrayList<>();
     private FloatingActionButton fab;
     private ProgressBar progressBar;
 
@@ -73,7 +78,7 @@ public class MainActivity extends AppCompatActivity {
         this.progressBar = this.findViewById(R.id.progressBar);
 
 
-        this.listViewAdapter = new ArrayAdapter<DataItem>(this, R.layout.activity_main__listitem, R.id.itemName) {
+        this.listViewAdapter = new ArrayAdapter<DataItem>(this, R.layout.activity_main__listitem, R.id.itemName, itemsList) {
             @NonNull
             @Override
             public View getView(int position, @androidx.annotation.Nullable View convertView, @NonNull ViewGroup parent) {
@@ -106,8 +111,25 @@ public class MainActivity extends AppCompatActivity {
 
         new ReadAllDataItemsTask(progressBar,
                 crudOperations,
-                items -> listViewAdapter.addAll(items)
+                items -> {
+                    listViewAdapter.addAll(items);
+                    //ruft nach starten direkt die Sortierung auf
+                    sorteListAndFocusItem(null);
+                }
         ).execute();
+
+    }
+//Sortierung
+    private void sorteListAndFocusItem(DataItem item){
+    this.itemsList.sort(Comparator.
+                    comparing(DataItem::isChecked) //falsche Methode?
+                    .thenComparing(DataItem::getName));
+                    this.listViewAdapter.notifyDataSetChanged();
+
+//Überprüft ob ein Item übergeben wurde
+      if (item != null){
+           ((ListView)this.listView).smoothScrollToPosition(this.listViewAdapter.getPosition(item));
+       }
 
     }
 
@@ -129,9 +151,8 @@ public class MainActivity extends AppCompatActivity {
                 progressBar,
                 created -> {
                     this.listViewAdapter.add(created);
-                    ((ListView) this.listView).smoothScrollToPosition(
-                            this.listViewAdapter.getPosition(item)
-                    );
+                    //Damit neues Item sortiert werden kann
+                    this.sorteListAndFocusItem(created);
                 }).execute(item);
     }
 
@@ -151,9 +172,12 @@ public class MainActivity extends AppCompatActivity {
                 DataItem existingItem = this.listViewAdapter.getItem(existingItemInList);
                 existingItem.setName(changedItem.getName());
                 existingItem.setChecked(changedItem.getChecked());
+                //existingItem.setFavourite(changedItem.getFavourite());
                 existingItem.setDescription(changedItem.getDescription());
                 existingItem .setContacts(changedItem.getContacts());
                 this.listViewAdapter.notifyDataSetChanged();
+                //Item das geupdated wurde soll sortiert werden
+               this.sorteListAndFocusItem(existingItem);
 
             } else {
                 showFeedbackMessage("Updated" + changedItem.getName() + "Updated Item cannot be found");
@@ -201,6 +225,8 @@ public class MainActivity extends AppCompatActivity {
                 .execute(item)
                 .thenAccept((updated) -> {
                     showFeedbackMessage("Item: " + item.getName() + "has been updated");
+                    //
+                    this.sorteListAndFocusItem(item); //feedbackmessage auch nach sortierung
                 });
     }
 }

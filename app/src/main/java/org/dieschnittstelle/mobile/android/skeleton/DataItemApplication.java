@@ -2,7 +2,9 @@ package org.dieschnittstelle.mobile.android.skeleton;
 
 import android.app.Application;
 import android.os.AsyncTask;
+import android.view.Menu;
 import android.widget.Toast;
+import android.app.Activity;
 
 import org.dieschnittstelle.mobile.android.skeleton.model.IDataItemCRUDOperations;
 import org.dieschnittstelle.mobile.android.skeleton.model.RetroFitDataItemCRUDOperationsImpl;
@@ -23,6 +25,8 @@ public class DataItemApplication extends Application {
         crudOperations = new RetroFitDataItemCRUDOperationsImpl();
 
     }
+
+
 
     public IDataItemCRUDOperations getCrudOperations() {
         try {
