@@ -1,7 +1,9 @@
 package org.dieschnittstelle.mobile.android.skeleton;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -44,9 +46,8 @@ public class DetailviewActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         binding = DataBindingUtil.setContentView(this, R.layout.activity_detailview);
 
+
         FloatingActionButton fab = binding.getRoot().findViewById(R.id.fab);
-
-
         EditText itemName = binding.getRoot().findViewById(R.id.itemName);
 
         itemName.setOnEditorActionListener(new TextView.OnEditorActionListener() {
@@ -71,6 +72,12 @@ public class DetailviewActivity extends AppCompatActivity {
 
         this.showFeedbackMessage("Item has contacts" + this.item.getContacts());
 
+//ueberprüft ob wir kontakte haben
+     if (item.getContacts() != null && item.getContacts().size() >0) {
+         item.getContacts().forEach(contactUriString -> {
+            this.showContactDetails(Uri.parse(contactUriString));
+         });
+     }
     }
 
     public void onSaveItem(View view) {
@@ -125,21 +132,38 @@ public class DetailviewActivity extends AppCompatActivity {
 
     private void addSelectedContactToContacts(Uri contactid) {
 
-        Cursor cursor = getContentResolver().query(contactid, null, null, null, null);
-        if (cursor.moveToFirst()) {
-            String contactName = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
-            String internalContactId = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts._ID));
-
-            showFeedbackMessage("Got result from Contact picker" + contactName + " with id " + internalContactId);
-
             if (item.getContacts() != null) {
                 item.setContacts(new ArrayList<>());
             }
-            if (item.getContacts().indexOf(internalContactId) == -1) {
+            if (item.getContacts().indexOf(contactid.toString()) == -1) {
                 item.getContacts().add(contactid.toString());
             }
-        }
+            showContactDetails(contactid);
     }
+//modifiziert
+
+    public void onRequestPermissionResult(int requestCode, @NonNull String[]permissions, @NonNull int[] grantResult) {
+
+    }
+
+  private void showContactDetails(Uri contactid) {
+            int hasReadContactsPermission = checkSelfPermission(Manifest.permission.READ_CONTACTS);
+            if (hasReadContactsPermission != PackageManager.PERMISSION_GRANTED){
+               requestPermissions(new String[]{Manifest.permission.READ_CONTACTS}, requestCode:4);
+               return;
+            }
+            else {
+                showFeedbackMessage("Contact Permission have been franted!");
+            }
+            Cursor cursor = getContentResolver().query(contactid, null, null, null, null);
+            if (cursor.moveToFirst()) {
+                String contactName = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
+                String internalContactId = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts._ID));
+
+                showFeedbackMessage("Got result from Contact picker" + contactName + " with id " + internalContactId);
+
+                }
+            }
 
     private void showFeedbackMessage(String msg) {
         Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
