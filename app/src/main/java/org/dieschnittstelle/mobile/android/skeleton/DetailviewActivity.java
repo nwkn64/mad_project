@@ -21,8 +21,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.databinding.DataBindingUtil;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.snackbar.BaseTransientBottomBar;
-import com.google.android.material.snackbar.Snackbar;
 
 import org.dieschnittstelle.mobile.android.skeleton.databinding.ActivityDetailviewBinding;
 import org.dieschnittstelle.mobile.android.skeleton.model.DataItem;
@@ -43,6 +41,10 @@ public class DetailviewActivity extends AppCompatActivity {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = DataBindingUtil.setContentView(this, R.layout.activity_detailview);
+
+        Bundle extras = this.getIntent().getExtras();
+        String id = extras.getString("crudOperations");
+
 
         FloatingActionButton fab = binding.getRoot().findViewById(R.id.fab);
 
@@ -79,6 +81,7 @@ public class DetailviewActivity extends AppCompatActivity {
         returnData.putExtra(ARG_ITEM, this.item);
 
         this.setResult(Activity.RESULT_OK, returnData);
+
         finish();
     }
 

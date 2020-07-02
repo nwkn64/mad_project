@@ -20,6 +20,7 @@ public class UpdateDataItemTaskWithFuture {
     }
 
     public CompletableFuture<Boolean> execute(DataItem item) {
+        System.out.println(item);
         CompletableFuture<Boolean> resultFuture = new CompletableFuture<>();
         new Thread(new Runnable() {
             @Override

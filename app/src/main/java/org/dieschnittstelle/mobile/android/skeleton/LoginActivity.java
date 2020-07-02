@@ -1,6 +1,9 @@
 package org.dieschnittstelle.mobile.android.skeleton;
 
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.Editable;
@@ -9,7 +12,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
-import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -25,13 +28,20 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import org.dieschnittstelle.mobile.android.skeleton.databinding.ActivityLoginBinding;
+import org.dieschnittstelle.mobile.android.skeleton.model.FireBaseCRUDOperations;
+import org.dieschnittstelle.mobile.android.skeleton.model.IDataItemCRUDOperations;
+import org.dieschnittstelle.mobile.android.skeleton.model.RoomDataItemCRUDOperationsImpl;
 
+import java.net.InetAddress;
+import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class LoginActivity extends AppCompatActivity {
     public static final int CALL_MAIN_ACTIVITY = 0;
-
+    public static final int CRUD_FIREBASE = 0;
+    public static final int CRUD_ROOM = 1;
+    public static int counter = 0;
 
     ActivityLoginBinding binding;
     private static final String EMAIL_PATTERN = "^[a-zA-Z0-9#_~!$&'()*+,;=:.\"(),:;<>@\\[\\]\\\\]+@[a-zA-Z0-9-]+(\\.[a-zA-Z0-9-]+)*$";
@@ -40,48 +50,22 @@ public class LoginActivity extends AppCompatActivity {
     private Pattern passwordPattern = Pattern.compile(PASSWORD_PATTERN);
 
     private Matcher matcher;
-
     private static TextInputLayout usernameWrapper;
     private static TextInputLayout passwordWrapper;
-
+    private static DatabaseReference mRootRef = FirebaseDatabase.getInstance().getReference();
+    private static DatabaseReference dbUser = mRootRef.child("user");
     private static ProgressBar progressBar;
 
     private static MaterialTextView errorMessage;
-    private static DatabaseReference mRootRef = FirebaseDatabase.getInstance().getReference();
-    private static DatabaseReference dbUser = mRootRef.child("user");
+    private static IDataItemCRUDOperations crudOperations;
 
-
-    DatabaseReference connectedRef = FirebaseDatabase.getInstance().getReference(".info/connected");
 
     private static Button loginBtn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        dbUser.getDatabase();
 
-
-
-        connectedRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-
-
-                boolean connected = snapshot.getValue(Boolean.class);
-                if (connected) {
-                    System.out.println("connected");
-                } else {
-
-                    Intent callDetailViewIntentForReturnValue = new Intent(LoginActivity.this, MainActivity.class);
-                    startActivityForResult(callDetailViewIntentForReturnValue, CALL_MAIN_ACTIVITY);
-
-                    System.out.println("not connected");
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Log.w("123", "Listener was cancelled");
-            }
-        });
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_login);
@@ -91,13 +75,10 @@ public class LoginActivity extends AppCompatActivity {
 
         this.progressBar = this.findViewById(R.id.progressBar);
         errorMessage = this.findViewById(R.id.errorwarning);
-        //this.progressBar.setVisibility(View.VISIBLE);
 
         loginBtn = findViewById(R.id.loginBtn);
         usernameWrapper = findViewById(R.id.emailWrapper);
         passwordWrapper = findViewById(R.id.passwordWrapper);
-
-
         loginBtn.setOnClickListener((view) -> {
 
 
@@ -181,6 +162,24 @@ public class LoginActivity extends AppCompatActivity {
         });
 
 
+        ConnectivityManager cm = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
+        boolean isMetered = cm.isActiveNetworkMetered();
+
+        if(isMetered){
+
+             Toast.makeText(this, "No connection to firebase, using local database", Toast.LENGTH_LONG).show();
+
+            Intent callLoginView = new Intent(LoginActivity.this, MainActivity.class);
+
+            callLoginView.putExtra("crudOperations", "1");
+            startActivityForResult(callLoginView, CALL_MAIN_ACTIVITY);
+        } else{
+            crudOperations = new FireBaseCRUDOperations();
+
+        }
+
+
+
     }
 
 
@@ -188,6 +187,7 @@ public class LoginActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
     }
+
 
     public boolean validateEmail() {
         matcher = emailPattern.matcher(usernameWrapper.getEditText().getText());
@@ -214,7 +214,8 @@ public class LoginActivity extends AppCompatActivity {
             protected Boolean doInBackground(Void... voids) {
                 try {
                     Thread.sleep(2000);
-                    LoginActivity.dbUser.addValueEventListener(new ValueEventListener() {
+                    dbUser.addValueEventListener(new ValueEventListener() {
+
                         @Override
                         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
 
@@ -222,9 +223,11 @@ public class LoginActivity extends AppCompatActivity {
 
 
                                 if (postSnapshot.child("email").getValue().toString().equals(LoginActivity.usernameWrapper.getEditText().getText().toString()) &&
+
                                         postSnapshot.child("password").getValue().toString().equals(LoginActivity.passwordWrapper.getEditText().getText().toString())) {
-                                    Intent callDetailViewIntentForReturnValue = new Intent(LoginActivity.this, MainActivity.class);
-                                    startActivityForResult(callDetailViewIntentForReturnValue, CALL_MAIN_ACTIVITY);
+                                    Intent callLoginView = new Intent(LoginActivity.this, MainActivity.class);
+                                    callLoginView.putExtra("crudOperations", "0");
+                                    startActivityForResult(callLoginView, CALL_MAIN_ACTIVITY);
 
                                 } else {
                                     progressBar.setVisibility(View.INVISIBLE);

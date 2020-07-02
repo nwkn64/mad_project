@@ -51,7 +51,6 @@ public class RetroFitDataItemCRUDOperationsImpl implements IDataItemCRUDOperatio
     public DataItem createDataItem(@Body DataItem item) {
         try {
             Log.i("RetrofitCRUD", "createItem() " + item);
-            System.out.println(item);
             return webAPI.createItem(item).execute().body();
         } catch (Exception e) {
             Log.e("RetrofitCRUD", "got exception", e);
