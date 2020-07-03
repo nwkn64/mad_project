@@ -20,6 +20,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.databinding.DataBindingUtil;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -74,7 +75,7 @@ public class DetailviewActivity extends AppCompatActivity {
 //ueberprüft ob wir kontakte haben
      if (item.getContacts() != null && item.getContacts().size() >0) {
          item.getContacts().forEach(contactUriString -> {
-            this.showContactDetails(Uri.parse(contactUriString));
+            this.showContactDetails(Uri.parse(contactUriString), 4);
          });
      }
     }
@@ -137,7 +138,7 @@ public class DetailviewActivity extends AppCompatActivity {
             if (item.getContacts().indexOf(contactid.toString()) == -1) {
                 item.getContacts().add(contactid.toString());
             }
-            showContactDetails(contactid);
+            showContactDetails(contactid, 4);
     }
 //modifiziert
 
@@ -145,10 +146,17 @@ public class DetailviewActivity extends AppCompatActivity {
 
     }
 
-  private void showContactDetails(Uri contactid) {
+  private void showContactDetails(Uri contactid, int requestCode) {
             int hasReadContactsPermission = checkSelfPermission(Manifest.permission.READ_CONTACTS);
             if (hasReadContactsPermission != PackageManager.PERMISSION_GRANTED){
-               requestPermissions(new String[]{Manifest.permission.READ_CONTACTS}, requestCode:4);
+
+                ActivityCompat
+                        .requestPermissions(
+                                DetailviewActivity.this,
+                                new String[] { Manifest.permission.READ_CONTACTS },
+                                requestCode);
+
+                requestPermissions(new String[]{Manifest.permission.READ_CONTACTS}, requestCode);
                return;
             }
             else {

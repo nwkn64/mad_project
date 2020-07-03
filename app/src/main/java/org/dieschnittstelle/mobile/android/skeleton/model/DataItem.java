@@ -25,13 +25,31 @@ public class DataItem implements Serializable {
 
     private String name;
 
+    public boolean isChecked() {
+        return checked;
+    }
+
+    public void setChecked(boolean checked) {
+        this.checked = checked;
+    }
+
+    public boolean isFavourite() {
+        return favourite;
+    }
+
+    public void setFavourite(boolean favourite) {
+        this.favourite = favourite;
+    }
+
     private String description;
 
 
-    @SerializedName("done")
+     @SerializedName("done")
     private boolean checked;
 
-    //private  boolean favourite;
+
+
+    private  boolean favourite;
 
     @Ignore
     private List<String> contacts = new ArrayList<>();
@@ -63,7 +81,7 @@ public class DataItem implements Serializable {
         this.name = name;
     }
 
-    public Boolean getChecked() {
+ /*   public Boolean getChecked() {
         return checked;
     }
 
@@ -71,9 +89,9 @@ public class DataItem implements Serializable {
         this.checked = checked;
     }
 
-    //public Boolean getFavourite () { return favourite; }
+  */
 
-    //public void setFavourite(Boolean favourite) { this.favourite = favourite; }
+
 
     public String getDescription() {
         return description;

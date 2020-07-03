@@ -17,22 +17,9 @@
 
 
 
-   <!--
-   <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        app:layout_constraintTop_toTopOf="parent">
 
 
-        <Spinner
-            android:id="@+id/spinner"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1" />
-    </LinearLayout>
--->
-         <LinearLayout
+     <LinearLayout
              android:layout_width="match_parent"
              android:layout_height="wrap_content"
              android:orientation="horizontal"
@@ -42,6 +29,8 @@
              <CheckBox
                  android:layout_width="wrap_content"
                  android:layout_height="wrap_content"
+                 android:checked="@={item.favourite}"
+
                  android:button="@android:color/transparent"
                  android:drawableStart="@drawable/custom_favorite_drawable"
                  android:drawablePadding="10dp"

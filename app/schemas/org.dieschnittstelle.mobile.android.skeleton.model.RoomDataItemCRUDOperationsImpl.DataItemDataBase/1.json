@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "e64cd04b7f841406cfb49cdfcbd61535",
+    "identityHash": "9a534b1b3f9e2e28e556a9135f0203be",
     "entities": [
       {
         "tableName": "DataItem",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT, `description` TEXT, `checked` INTEGER NOT NULL, `contactsStr` TEXT)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT, `description` TEXT, `checked` INTEGER NOT NULL, `favourite` INTEGER NOT NULL, `contactsStr` TEXT)",
         "fields": [
           {
             "fieldPath": "id",
@@ -33,6 +33,12 @@
             "notNull": true
           },
           {
+            "fieldPath": "favourite",
+            "columnName": "favourite",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
             "fieldPath": "contactsStr",
             "columnName": "contactsStr",
             "affinity": "TEXT",
@@ -52,7 +58,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e64cd04b7f841406cfb49cdfcbd61535')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '9a534b1b3f9e2e28e556a9135f0203be')"
     ]
   }
 }
