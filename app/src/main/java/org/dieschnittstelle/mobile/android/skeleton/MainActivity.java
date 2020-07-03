@@ -171,8 +171,8 @@ public class MainActivity extends AppCompatActivity {
             if (existingItemInList > -1) {
                 DataItem existingItem = this.listViewAdapter.getItem(existingItemInList);
                 existingItem.setName(changedItem.getName());
-                existingItem.setChecked(changedItem.getChecked());
-                //existingItem.setFavourite(changedItem.getFavourite());
+                existingItem.setChecked(changedItem.isChecked());
+                existingItem.setFavourite(changedItem.isFavourite());
                 existingItem.setDescription(changedItem.getDescription());
                 existingItem .setContacts(changedItem.getContacts());
                 this.listViewAdapter.notifyDataSetChanged();
@@ -220,7 +220,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onListItemChanged(DataItem item) {
-        showFeedbackMessage("Updated Item " + item.getName() + "with status: " + item.getChecked());
+        showFeedbackMessage("Updated Item " + item.getName() + "with status: " + item.isChecked());
         new UpdateDataItemTaskWithFuture(this, this.crudOperations)
                 .execute(item)
                 .thenAccept((updated) -> {
