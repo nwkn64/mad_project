@@ -4,7 +4,6 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <data>
-
         <variable
             name="controller"
             type="org.dieschnittstelle.mobile.android.skeleton.LoginActivity" />

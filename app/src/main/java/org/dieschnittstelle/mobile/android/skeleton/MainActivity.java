@@ -22,6 +22,7 @@ import javax.annotation.Nullable;
 
 import org.dieschnittstelle.mobile.android.skeleton.databinding.ActivityMainListitemBinding;
 import org.dieschnittstelle.mobile.android.skeleton.model.DataItem;
+import org.dieschnittstelle.mobile.android.skeleton.model.FireBaseCRUDOperations;
 import org.dieschnittstelle.mobile.android.skeleton.model.IDataItemCRUDOperations;
 import org.dieschnittstelle.mobile.android.skeleton.model.RoomDataItemCRUDOperationsImpl;
 import org.dieschnittstelle.mobile.android.tasks.CreateDataItemTask;
@@ -50,13 +51,26 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+
+
         ((DataItemApplication) getApplication()).verifyWebAvailable(available -> {
             this.initialiseView();
         });
     }
 
     private void initialiseView() {
-        this.crudOperations = new RoomDataItemCRUDOperationsImpl(this);
+
+
+        Bundle  extras = this.getIntent().getExtras();
+        String id = extras.getString("crudOperations");
+
+        if(id.equals("0")){
+            this.crudOperations = new FireBaseCRUDOperations();
+        } else{
+            this.crudOperations = new RoomDataItemCRUDOperationsImpl(this);
+
+        }
+
 
 
         this.listView = this.findViewById(R.id.listView);
@@ -120,14 +134,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void onListItemSelected(DataItem item) {
+        System.out.println("miaumiau?!");
         Intent callDetailViewIntent = new Intent(this, DetailviewActivity.class);
         callDetailViewIntent.putExtra(DetailviewActivity.ARG_ITEM, item);
         startActivityForResult(callDetailViewIntent, CALL_DETAIL_VIEW_FOR_EXISTING_ITEM);
     }
 
     private void onAddNewListItem() {
-        Intent callDetailViewIntentForReturnValue = new Intent(this, DetailviewActivity.class);
-        startActivityForResult(callDetailViewIntentForReturnValue, CALL_DETAIL_VIEW_FOR_NEW_ITEM);
+        Intent callDetailViewIntent = new Intent(this, DetailviewActivity.class);
+        startActivityForResult(callDetailViewIntent, CALL_DETAIL_VIEW_FOR_NEW_ITEM);
     }
 
     private void createItemAndAddItToList(DataItem item) {
@@ -176,6 +191,8 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        System.out.println(resultCode);
+        System.out.println(requestCode);
         if (requestCode == CALL_DETAIL_VIEW_FOR_NEW_ITEM) {
             if (resultCode == Activity.RESULT_OK) {
                 DataItem item = (DataItem) data.getSerializableExtra(DetailviewActivity.ARG_ITEM);

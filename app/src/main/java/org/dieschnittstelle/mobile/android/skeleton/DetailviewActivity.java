@@ -46,6 +46,9 @@ public class DetailviewActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         binding = DataBindingUtil.setContentView(this, R.layout.activity_detailview);
 
+        Bundle extras = this.getIntent().getExtras();
+        String id = extras.getString("crudOperations");
+
 
         FloatingActionButton fab = binding.getRoot().findViewById(R.id.fab);
         EditText itemName = binding.getRoot().findViewById(R.id.itemName);
@@ -86,6 +89,7 @@ public class DetailviewActivity extends AppCompatActivity {
         returnData.putExtra(ARG_ITEM, this.item);
 
         this.setResult(Activity.RESULT_OK, returnData);
+
         finish();
     }
 
