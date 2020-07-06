@@ -30,7 +30,12 @@ public class CreateDataItemTask extends AsyncTask<DataItem, Void, DataItem> {
 
     @Override
     protected DataItem doInBackground(DataItem... dataItems) {
-        return crudOperations.createDataItem(dataItems[0]);
+        System.out.println("bubu");
+        System.out.println(dataItems[0].getName());
+
+        System.out.println(dataItems[0].toString());
+        crudOperations.createDataItem(dataItems[0]);
+        return dataItems[0];
     }
 
     @Override

@@ -4,6 +4,7 @@ import android.content.Context;
 
 import androidx.room.Dao;
 import androidx.room.Database;
+import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.Query;
 import androidx.room.Room;
@@ -25,6 +26,9 @@ public class RoomDataItemCRUDOperationsImpl implements IDataItemCRUDOperations {
 
         @Update
         public int aktualisiere(DataItem item);
+
+        @Query("DELETE FROM dataitem")
+        public int deleteAllDataItems();
     }
 
 
@@ -41,7 +45,7 @@ public class RoomDataItemCRUDOperationsImpl implements IDataItemCRUDOperations {
 
     @Override
     public DataItem createDataItem(DataItem item) {
-       // item.beforePersist();
+        // item.beforePersist();
         long id = db.getDao().create(item);
         item.setId(id);
         return null;
@@ -75,6 +79,11 @@ public class RoomDataItemCRUDOperationsImpl implements IDataItemCRUDOperations {
     @Override
 
     public boolean deleteDataItem(long id) {
-        return false;
+        return true;
+    }
+
+    @Override
+    public void deleteAllDataItems() {
+        db.getDao().deleteAllDataItems();
     }
 }

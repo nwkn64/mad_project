@@ -3,16 +3,20 @@ package org.dieschnittstelle.mobile.android.skeleton;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.databinding.DataBindingUtil;
+import androidx.room.Room;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.BaseTransientBottomBar;
@@ -26,8 +30,10 @@ import org.dieschnittstelle.mobile.android.skeleton.model.FireBaseCRUDOperations
 import org.dieschnittstelle.mobile.android.skeleton.model.IDataItemCRUDOperations;
 import org.dieschnittstelle.mobile.android.skeleton.model.RoomDataItemCRUDOperationsImpl;
 import org.dieschnittstelle.mobile.android.tasks.CreateDataItemTask;
+import org.dieschnittstelle.mobile.android.tasks.DeleteAllDataItemsTask;
 import org.dieschnittstelle.mobile.android.tasks.ReadAllDataItemsTask;
 import org.dieschnittstelle.mobile.android.tasks.UpdateDataItemTaskWithFuture;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -40,7 +46,7 @@ public class MainActivity extends AppCompatActivity {
     private ViewGroup listView;
     private ArrayAdapter<DataItem> listViewAdapter;
     //neue Liste die sortiert werden kann
-    private List<DataItem> itemsList =new ArrayList<>();
+    private List<DataItem> itemsList = new ArrayList<>();
     private FloatingActionButton fab;
     private ProgressBar progressBar;
 
@@ -52,31 +58,28 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
 
+        this.initialiseView();
 
-        ((DataItemApplication) getApplication()).verifyWebAvailable(available -> {
-            this.initialiseView();
-        });
     }
 
     private void initialiseView() {
 
 
-        Bundle  extras = this.getIntent().getExtras();
+        Bundle extras = this.getIntent().getExtras();
         String id = extras.getString("crudOperations");
 
-        if(id.equals("0")){
+        if (id.equals("0")) {
             this.crudOperations = new FireBaseCRUDOperations();
-        } else{
+
+        } else {
             this.crudOperations = new RoomDataItemCRUDOperationsImpl(this);
 
         }
 
 
-
         this.listView = this.findViewById(R.id.listView);
         this.fab = this.findViewById(R.id.fab);
         this.progressBar = this.findViewById(R.id.progressBar);
-
 
         this.listViewAdapter = new ArrayAdapter<DataItem>(this, R.layout.activity_main__listitem, R.id.itemName, itemsList) {
             @NonNull
@@ -109,27 +112,155 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
-        new ReadAllDataItemsTask(progressBar,
-                crudOperations,
-                items -> {
-                    listViewAdapter.addAll(items);
-                    //ruft nach starten direkt die Sortierung auf
-                    sorteListAndFocusItem(null);
-                }
-        ).execute();
+        synchronize(true);
 
     }
-//Sortierung
-    private void sorteListAndFocusItem(DataItem item){
-    this.itemsList.sort(Comparator.
-                    comparing(DataItem::isChecked) //falsche Methode?
-                    .thenComparing(DataItem::getName));
-                    this.listViewAdapter.notifyDataSetChanged();
+
+    private void synchronize(Boolean initialLoad) {
+        System.out.println(crudOperations.getClass().isAssignableFrom(new FireBaseCRUDOperations().getClass()));
+        if (crudOperations.getClass().isAssignableFrom(new FireBaseCRUDOperations().getClass())) {
+            RoomDataItemCRUDOperationsImpl roomCrud = new RoomDataItemCRUDOperationsImpl(this);
+            new ReadAllDataItemsTask(progressBar,
+                    roomCrud,
+                    items -> {
+                        System.out.println(items.size());
+                        if (items.size() > 0) {
+                            crudOperations.deleteAllDataItems();
+                            this.listViewAdapter.clear();
+
+                            items.forEach(obj -> {
+                                new CreateDataItemTask(
+                                        crudOperations,
+                                        progressBar,
+                                        created -> {
+                                            this.listViewAdapter.add(created);
+                                            sorteListAndFocusItem(null);
+                                            //Damit neues Item sortiert werden kann
+                                        }).execute(obj);
+                            });
+
+                        } else {
+                            new ReadAllDataItemsTask(progressBar,
+                                    crudOperations,
+                                    fireBaseItems -> {
+                                        fireBaseItems.forEach(dat -> {
+
+                                            System.out.println(dat);
+
+                                            new CreateDataItemTask(
+                                                    roomCrud,
+                                                    progressBar,
+                                                    created -> {
+                                                        this.listViewAdapter.add(created);
+                                                        sorteListAndFocusItem(null);
+                                                        //Damit neues Item sortiert werden kann
+                                                    }).execute(dat);
+                                        });
+                                        listViewAdapter.addAll(fireBaseItems);
+                                        //ruft nach starten direkt die Sortierung auf
+
+                                    }
+                            ).execute();
+                        }
+
+
+                    }).execute();
+        } else {
+            if(initialLoad){
+                new ReadAllDataItemsTask(progressBar,
+                        crudOperations,
+                        items -> {
+                            listViewAdapter.addAll(items);
+                            //ruft nach starten direkt die Sortierung auf
+
+                            sorteListAndFocusItem(null);
+                        }
+                ).execute();
+            }
+
+        }
+
+
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.deleteFirebase:
+                deleteFirebase();
+                return true;
+            case R.id.deleteRoom:
+                deleteRoom();
+                return true;
+            case R.id.synchronize:
+                synchronize(false);
+                return true;
+            default:
+                return super.onCreateOptionsMenu((Menu) item);
+        }
+    }
+
+
+    private void deleteFirebase() {
+        FireBaseCRUDOperations fireBaseCrud = new FireBaseCRUDOperations();
+
+        new DeleteAllDataItemsTask(this, fireBaseCrud)
+                .execute().thenAccept(updated -> {
+            new ReadAllDataItemsTask(progressBar,
+                    fireBaseCrud,
+                    items -> {
+                        listViewAdapter.addAll(items);
+                        //ruft nach starten direkt die Sortierung auf
+                    }
+            ).execute();
+            Toast.makeText(this, "Deleted all tasks from Firebase",
+                    Toast.LENGTH_SHORT).show();
+        });
+
+        if (crudOperations.getClass().isAssignableFrom(new FireBaseCRUDOperations().getClass())) {
+            this.listViewAdapter.clear();
+        }
+        this.listViewAdapter.notifyDataSetChanged();
+
+
+    }
+
+
+    private void deleteRoom() {
+        RoomDataItemCRUDOperationsImpl roomCrud = new RoomDataItemCRUDOperationsImpl(this);
+
+        new DeleteAllDataItemsTask(this, roomCrud)
+                .execute().thenAccept(updated -> {
+            Toast.makeText(this, "Deleted all tasks from Room",
+                    Toast.LENGTH_SHORT).show();
+        });
+
+        if (crudOperations.getClass().isAssignableFrom(new RoomDataItemCRUDOperationsImpl(this).getClass())) {
+            this.listViewAdapter.clear();
+        }
+
+        this.listViewAdapter.notifyDataSetChanged();
+    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.activity_main_sort, menu);
+        return true;
+    }
+
+    //Sortierung
+    private void sorteListAndFocusItem(DataItem item) {
+        System.out.println(this.itemsList);
+        this.itemsList.sort(Comparator.
+                comparing(DataItem::isChecked) //falsche Methode?
+                .thenComparing(DataItem::getName));
+        this.listViewAdapter.notifyDataSetChanged();
 
 //Überprüft ob ein Item übergeben wurde
-      if (item != null){
-           ((ListView)this.listView).smoothScrollToPosition(this.listViewAdapter.getPosition(item));
-       }
+        if (item != null) {
+            ((ListView) this.listView).smoothScrollToPosition(this.listViewAdapter.getPosition(item));
+        }
 
     }
 
@@ -146,14 +277,19 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void createItemAndAddItToList(DataItem item) {
+
+        item.setChecked(false);
         new CreateDataItemTask(
                 crudOperations,
                 progressBar,
                 created -> {
+                    System.out.println(created.getName());
                     this.listViewAdapter.add(created);
+                    this.listViewAdapter.notifyDataSetChanged();
                     //Damit neues Item sortiert werden kann
-                    this.sorteListAndFocusItem(created);
                 }).execute(item);
+
+
     }
 
     private void updateItemAndUpdateList(DataItem item) {
@@ -174,10 +310,10 @@ public class MainActivity extends AppCompatActivity {
                 existingItem.setChecked(changedItem.isChecked());
                 existingItem.setFavourite(changedItem.isFavourite());
                 existingItem.setDescription(changedItem.getDescription());
-                existingItem .setContacts(changedItem.getContacts());
+                existingItem.setContacts(changedItem.getContacts());
                 this.listViewAdapter.notifyDataSetChanged();
                 //Item das geupdated wurde soll sortiert werden
-               this.sorteListAndFocusItem(existingItem);
+                this.sorteListAndFocusItem(existingItem);
 
             } else {
                 showFeedbackMessage("Updated" + changedItem.getName() + "Updated Item cannot be found");
@@ -224,7 +360,7 @@ public class MainActivity extends AppCompatActivity {
         new UpdateDataItemTaskWithFuture(this, this.crudOperations)
                 .execute(item)
                 .thenAccept((updated) -> {
-                    showFeedbackMessage("Item: " + item.getName() + "has been updated");
+                    showFeedbackMessage("Item: " + item.getName() + " has been updated");
                     //
                     this.sorteListAndFocusItem(item); //feedbackmessage auch nach sortierung
                 });
