@@ -44,12 +44,11 @@ public class DataItem implements Serializable {
     private String description;
 
 
-     @SerializedName("done")
+    @SerializedName("done")
     private boolean checked;
 
 
-
-    private  boolean favourite;
+    private boolean favourite;
 
     @Ignore
     private List<String> contacts = new ArrayList<>();
@@ -80,18 +79,6 @@ public class DataItem implements Serializable {
     public void setName(String name) {
         this.name = name;
     }
-
- /*   public Boolean getChecked() {
-        return checked;
-    }
-
-    public void setChecked(Boolean checked) {
-        this.checked = checked;
-    }
-
-  */
-
-
 
     public String getDescription() {
         return description;
@@ -149,6 +136,6 @@ public class DataItem implements Serializable {
                     .collect(Collectors.toList());
             this.contactsStr = null;
         }
-        return this; 
+        return this;
     }
 }

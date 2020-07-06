@@ -91,4 +91,8 @@ public class RetroFitDataItemCRUDOperationsImpl implements IDataItemCRUDOperatio
     public boolean deleteDataItem(long id) {
         return false;
     }
+
+    @Override
+    public void deleteAllDataItems() {
+    }
 }

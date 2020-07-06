@@ -31,6 +31,8 @@ import org.dieschnittstelle.mobile.android.skeleton.databinding.ActivityLoginBin
 import org.dieschnittstelle.mobile.android.skeleton.model.FireBaseCRUDOperations;
 import org.dieschnittstelle.mobile.android.skeleton.model.IDataItemCRUDOperations;
 import org.dieschnittstelle.mobile.android.skeleton.model.RoomDataItemCRUDOperationsImpl;
+import org.dieschnittstelle.mobile.android.tasks.DeleteAllDataItemsTask;
+import org.dieschnittstelle.mobile.android.tasks.UpdateDataItemTaskWithFuture;
 
 import java.net.InetAddress;
 import java.util.ArrayList;
@@ -62,6 +64,7 @@ public class LoginActivity extends AppCompatActivity {
 
     private static Button loginBtn;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         dbUser.getDatabase();
@@ -77,6 +80,7 @@ public class LoginActivity extends AppCompatActivity {
         errorMessage = this.findViewById(R.id.errorwarning);
 
         loginBtn = findViewById(R.id.loginBtn);
+
         usernameWrapper = findViewById(R.id.emailWrapper);
         passwordWrapper = findViewById(R.id.passwordWrapper);
         loginBtn.setOnClickListener((view) -> {
@@ -86,6 +90,7 @@ public class LoginActivity extends AppCompatActivity {
 
 
         });
+
 
         usernameWrapper.getEditText().addTextChangedListener(new TextWatcher() {
 
@@ -165,18 +170,19 @@ public class LoginActivity extends AppCompatActivity {
         ConnectivityManager cm = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
         boolean isMetered = cm.isActiveNetworkMetered();
 
-        if(isMetered){
+        if (isMetered) {
 
-             Toast.makeText(this, "No connection to firebase, using local database", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "No connection to firebase, using local database", Toast.LENGTH_LONG).show();
 
             Intent callLoginView = new Intent(LoginActivity.this, MainActivity.class);
 
             callLoginView.putExtra("crudOperations", "1");
             startActivityForResult(callLoginView, CALL_MAIN_ACTIVITY);
-        } else{
+        } else {
             crudOperations = new FireBaseCRUDOperations();
 
         }
+
 
 
 

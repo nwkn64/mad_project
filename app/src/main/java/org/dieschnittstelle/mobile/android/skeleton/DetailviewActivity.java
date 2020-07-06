@@ -48,7 +48,7 @@ public class DetailviewActivity extends AppCompatActivity {
         binding = DataBindingUtil.setContentView(this, R.layout.activity_detailview);
 
         Bundle extras = this.getIntent().getExtras();
-        String id = extras.getString("crudOperations");
+//        String id = extras.getString("crudOperations");
 
 
         FloatingActionButton fab = binding.getRoot().findViewById(R.id.fab);
@@ -70,18 +70,22 @@ public class DetailviewActivity extends AppCompatActivity {
         this.item = (DataItem) getIntent().getSerializableExtra(ARG_ITEM);
         if (item == null) {
             this.item = new DataItem();
+            this.item.setFavourite(false);
+            this.item.setChecked(false);
+            System.out.println(this.item);
         }
+
         binding.setController(this);
 
 
         this.showFeedbackMessage("Item has contacts" + this.item.getContacts());
 
 //ueberprüft ob wir kontakte haben
-     if (item.getContacts() != null && item.getContacts().size() >0) {
-         item.getContacts().forEach(contactUriString -> {
-            this.showContactDetails(Uri.parse(contactUriString), 4);
-         });
-     }
+        if (item.getContacts() != null && item.getContacts().size() > 0) {
+            item.getContacts().forEach(contactUriString -> {
+                this.showContactDetails(Uri.parse(contactUriString), 4);
+            });
+        }
     }
 
     public void onSaveItem(View view) {
@@ -137,45 +141,44 @@ public class DetailviewActivity extends AppCompatActivity {
 
     private void addSelectedContactToContacts(Uri contactid) {
 
-            if (item.getContacts() != null) {
-                item.setContacts(new ArrayList<>());
-            }
-            if (item.getContacts().indexOf(contactid.toString()) == -1) {
-                item.getContacts().add(contactid.toString());
-            }
-            showContactDetails(contactid, 4);
+        if (item.getContacts() != null) {
+            item.setContacts(new ArrayList<>());
+        }
+        if (item.getContacts().indexOf(contactid.toString()) == -1) {
+            item.getContacts().add(contactid.toString());
+        }
+        showContactDetails(contactid, 4);
     }
 //modifiziert
 
-    public void onRequestPermissionResult(int requestCode, @NonNull String[]permissions, @NonNull int[] grantResult) {
+    public void onRequestPermissionResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResult) {
 
     }
 
-  private void showContactDetails(Uri contactid, int requestCode) {
-            int hasReadContactsPermission = checkSelfPermission(Manifest.permission.READ_CONTACTS);
-            if (hasReadContactsPermission != PackageManager.PERMISSION_GRANTED){
+    private void showContactDetails(Uri contactid, int requestCode) {
+        int hasReadContactsPermission = checkSelfPermission(Manifest.permission.READ_CONTACTS);
+        if (hasReadContactsPermission != PackageManager.PERMISSION_GRANTED) {
 
-                ActivityCompat
-                        .requestPermissions(
-                                DetailviewActivity.this,
-                                new String[] { Manifest.permission.READ_CONTACTS },
-                                requestCode);
+            ActivityCompat
+                    .requestPermissions(
+                            DetailviewActivity.this,
+                            new String[]{Manifest.permission.READ_CONTACTS},
+                            requestCode);
 
-                requestPermissions(new String[]{Manifest.permission.READ_CONTACTS}, requestCode);
-               return;
-            }
-            else {
-                showFeedbackMessage("Contact Permission have been franted!");
-            }
-            Cursor cursor = getContentResolver().query(contactid, null, null, null, null);
-            if (cursor.moveToFirst()) {
-                String contactName = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
-                String internalContactId = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts._ID));
+            requestPermissions(new String[]{Manifest.permission.READ_CONTACTS}, requestCode);
+            return;
+        } else {
+            showFeedbackMessage("Contact Permission have been franted!");
+        }
+        Cursor cursor = getContentResolver().query(contactid, null, null, null, null);
+        if (cursor.moveToFirst()) {
+            String contactName = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
+            String internalContactId = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts._ID));
 
-                showFeedbackMessage("Got result from Contact picker" + contactName + " with id " + internalContactId);
+            showFeedbackMessage("Got result from Contact picker" + contactName + " with id " + internalContactId);
 
-                }
-            }
+        }
+    }
 
     private void showFeedbackMessage(String msg) {
         Toast.makeText(this, msg, Toast.LENGTH_LONG).show();

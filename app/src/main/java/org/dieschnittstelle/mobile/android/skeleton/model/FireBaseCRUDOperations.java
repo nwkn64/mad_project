@@ -83,4 +83,9 @@ public class FireBaseCRUDOperations implements IDataItemCRUDOperations {
     public boolean deleteDataItem(long id) {
         return false;
     }
+
+    @Override
+    public void deleteAllDataItems() {
+        dbTasks.removeValue();
+    }
 }

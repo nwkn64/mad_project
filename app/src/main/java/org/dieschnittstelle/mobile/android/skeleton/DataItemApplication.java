@@ -38,25 +38,6 @@ public class DataItemApplication extends Application {
         }
     }
 
-    public void verifyWebAvailable(Consumer<Boolean> onDone) {
-        new AsyncTask<Void, Void, Boolean>() {
 
-            @Override
-            protected Boolean doInBackground(Void... voids) {
-                try {
-                    Thread.sleep(2000);
 
-                } catch (Exception e) {
-
-                }
-                return true;
-            }
-
-            @Override
-            protected void onPostExecute(Boolean available) {
-               // Toast.makeText(DataItemApplication.this, "The webapp is running", Toast.LENGTH_LONG).show();
-                onDone.accept(available);
-            }
-        }.execute();
-    }
 }

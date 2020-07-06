@@ -10,4 +10,14 @@
     <item
         android:id="@+id/DateFavourite"
         android:title="Date+favourite" />
+    <item
+        android:id="@+id/deleteFirebase"
+        android:title="Delete Data from Firebase"/>
+    <item
+        android:id="@+id/deleteRoom"
+        android:title="Delete Data from Room"/>
+
+    <item
+        android:id="@+id/synchronize"
+        android:title="Synchronize Data"/>
 </menu>
