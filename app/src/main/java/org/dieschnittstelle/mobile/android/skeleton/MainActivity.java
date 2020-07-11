@@ -1,10 +1,5 @@
 package org.dieschnittstelle.mobile.android.skeleton;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.databinding.DataBindingUtil;
-import androidx.room.Room;
-
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -18,11 +13,13 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.databinding.DataBindingUtil;
+
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.BaseTransientBottomBar;
 import com.google.android.material.snackbar.Snackbar;
-
-import javax.annotation.Nullable;
 
 import org.dieschnittstelle.mobile.android.skeleton.databinding.ActivityMainListitemBinding;
 import org.dieschnittstelle.mobile.android.skeleton.model.DataItem;
@@ -37,6 +34,8 @@ import org.dieschnittstelle.mobile.android.tasks.UpdateDataItemTaskWithFuture;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+
+import javax.annotation.Nullable;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -68,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
         Bundle extras = this.getIntent().getExtras();
         String id = extras.getString("crudOperations");
 
-        if (id.equals("0")) {
+        if (id == null || id.equals("0") ) {
             this.crudOperations = new FireBaseCRUDOperations();
 
         } else {
@@ -117,13 +116,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void synchronize(Boolean initialLoad) {
-        System.out.println(crudOperations.getClass().isAssignableFrom(new FireBaseCRUDOperations().getClass()));
         if (crudOperations.getClass().isAssignableFrom(new FireBaseCRUDOperations().getClass())) {
             RoomDataItemCRUDOperationsImpl roomCrud = new RoomDataItemCRUDOperationsImpl(this);
             new ReadAllDataItemsTask(progressBar,
                     roomCrud,
                     items -> {
-                        System.out.println(items.size());
                         if (items.size() > 0) {
                             crudOperations.deleteAllDataItems();
                             this.listViewAdapter.clear();
@@ -145,7 +142,6 @@ public class MainActivity extends AppCompatActivity {
                                     fireBaseItems -> {
                                         fireBaseItems.forEach(dat -> {
 
-                                            System.out.println(dat);
 
                                             new CreateDataItemTask(
                                                     roomCrud,
@@ -251,7 +247,6 @@ public class MainActivity extends AppCompatActivity {
 
     //Sortierung
     private void sorteListAndFocusItem(DataItem item) {
-        System.out.println(this.itemsList);
         this.itemsList.sort(Comparator.
                 comparing(DataItem::isChecked) //falsche Methode?
                 .thenComparing(DataItem::getName));
@@ -265,7 +260,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void onListItemSelected(DataItem item) {
-        System.out.println("miaumiau?!");
         Intent callDetailViewIntent = new Intent(this, DetailviewActivity.class);
         callDetailViewIntent.putExtra(DetailviewActivity.ARG_ITEM, item);
         startActivityForResult(callDetailViewIntent, CALL_DETAIL_VIEW_FOR_EXISTING_ITEM);
@@ -283,7 +277,6 @@ public class MainActivity extends AppCompatActivity {
                 crudOperations,
                 progressBar,
                 created -> {
-                    System.out.println(created.getName());
                     this.listViewAdapter.add(created);
                     this.listViewAdapter.notifyDataSetChanged();
                     //Damit neues Item sortiert werden kann
@@ -327,8 +320,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        System.out.println(resultCode);
-        System.out.println(requestCode);
         if (requestCode == CALL_DETAIL_VIEW_FOR_NEW_ITEM) {
             if (resultCode == Activity.RESULT_OK) {
                 DataItem item = (DataItem) data.getSerializableExtra(DetailviewActivity.ARG_ITEM);

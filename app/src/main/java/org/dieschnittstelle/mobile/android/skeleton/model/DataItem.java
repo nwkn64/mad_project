@@ -43,6 +43,25 @@ public class DataItem implements Serializable {
 
     private String description;
 
+    public String getGeoCoordinates() {
+        return geoCoordinates;
+    }
+
+    public void setGeoCoordinates(String geoCoordinates) {
+        this.geoCoordinates = geoCoordinates;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
+    private String geoCoordinates;
+
+    private String location;
 
     @SerializedName("done")
     private boolean checked;

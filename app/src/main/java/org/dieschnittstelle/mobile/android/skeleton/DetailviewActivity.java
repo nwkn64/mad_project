@@ -13,6 +13,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -24,8 +25,6 @@ import androidx.core.app.ActivityCompat;
 import androidx.databinding.DataBindingUtil;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.snackbar.BaseTransientBottomBar;
-import com.google.android.material.snackbar.Snackbar;
 
 import org.dieschnittstelle.mobile.android.skeleton.databinding.ActivityDetailviewBinding;
 import org.dieschnittstelle.mobile.android.skeleton.model.DataItem;
@@ -42,16 +41,18 @@ public class DetailviewActivity extends AppCompatActivity {
     private DataItem item;
     private ActivityDetailviewBinding binding;
 
+    private static Button locationBtn;
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = DataBindingUtil.setContentView(this, R.layout.activity_detailview);
 
-        Bundle extras = this.getIntent().getExtras();
-        String id = extras.getString("crudOperations");
-
 
         FloatingActionButton fab = binding.getRoot().findViewById(R.id.fab);
+        locationBtn = binding.getRoot().findViewById(R.id.locationBtn);
+
+
         EditText itemName = binding.getRoot().findViewById(R.id.itemName);
 
         itemName.setOnEditorActionListener(new TextView.OnEditorActionListener() {
@@ -67,33 +68,46 @@ public class DetailviewActivity extends AppCompatActivity {
                 return false;
             }
         });
-        this.item = (DataItem) getIntent().getSerializableExtra(ARG_ITEM);
+
+        locationBtn.setOnClickListener((view) -> {
+
+            Intent callMapView = new Intent(this, MapsActivity.class);
+            callMapView.putExtra("item", item);
+            startActivity(callMapView);
+
+
+        });
+
+
+        item = (DataItem) getIntent().getSerializableExtra(ARG_ITEM);
         if (item == null) {
-            this.item = new DataItem();
-            this.item.setFavourite(false);
-            this.item.setChecked(false);
-            System.out.println(this.item);
+            item = new DataItem();
+            item.setFavourite(false);
+            item.setChecked(false);
         }
 
-        binding.setController(this);
 
 
-        this.showFeedbackMessage("Item has contacts" + this.item.getContacts());
 
-//ueberprüft ob wir kontakte haben
+        this.showFeedbackMessage("Item has contacts" + item.getContacts());
+
         if (item.getContacts() != null && item.getContacts().size() > 0) {
             item.getContacts().forEach(contactUriString -> {
                 this.showContactDetails(Uri.parse(contactUriString), 4);
             });
         }
+
+        binding.setController(this);
+
+        System.out.println(item.getGeoCoordinates());
+
     }
 
     public void onSaveItem(View view) {
         Intent returnData = new Intent();
+        returnData.putExtra(ARG_ITEM, item);
 
-        returnData.putExtra(ARG_ITEM, this.item);
-
-        this.setResult(Activity.RESULT_OK, returnData);
+        setResult(Activity.RESULT_OK, returnData);
 
         finish();
     }
@@ -149,11 +163,7 @@ public class DetailviewActivity extends AppCompatActivity {
         }
         showContactDetails(contactid, 4);
     }
-//modifiziert
 
-    public void onRequestPermissionResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResult) {
-
-    }
 
     private void showContactDetails(Uri contactid, int requestCode) {
         int hasReadContactsPermission = checkSelfPermission(Manifest.permission.READ_CONTACTS);

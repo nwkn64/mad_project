@@ -21,7 +21,6 @@ public class FireBaseCRUDOperations implements IDataItemCRUDOperations {
 
     @Override
     public DataItem createDataItem(DataItem item) {
-        System.out.println("say miau?");
         item.setId(item.hashCode());
         dbTasks.child(String.valueOf(item.getId())).setValue(item);
 
@@ -71,9 +70,7 @@ public class FireBaseCRUDOperations implements IDataItemCRUDOperations {
 
     @Override
     public boolean updateDataItem(DataItem item) {
-        System.out.println(item.getId());
 
-        System.out.println("hier?!?!");
         dbTasks.child(String.valueOf(item.getId())).setValue(item);
 
         return true;
