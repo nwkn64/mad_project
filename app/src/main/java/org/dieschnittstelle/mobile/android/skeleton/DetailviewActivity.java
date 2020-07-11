@@ -2,19 +2,26 @@ package org.dieschnittstelle.mobile.android.skeleton;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.text.format.DateFormat;
+import android.text.format.DateUtils;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
+import android.widget.Button;
+import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.TimePicker;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -30,7 +37,9 @@ import com.google.android.material.snackbar.Snackbar;
 import org.dieschnittstelle.mobile.android.skeleton.databinding.ActivityDetailviewBinding;
 import org.dieschnittstelle.mobile.android.skeleton.model.DataItem;
 
+import java.time.Year;
 import java.util.ArrayList;
+import java.util.Calendar;
 
 public class DetailviewActivity extends AppCompatActivity {
 
@@ -38,7 +47,17 @@ public class DetailviewActivity extends AppCompatActivity {
 
     public static final int CALL_CONTACT_PICKER = 0;
 
+    //Datepicker1
+ /*   //Elemente des Datepickers
+    Button btnTime, btnDate;
+    TextView tvTime, tvDate;
 
+    //Dialoge Date Picker1
+    TimePickerDialog timePickerDialog;
+    DatePickerDialog datePickerDialog;
+
+    Calendar calendar = Calendar.getInstance();
+*/
     private DataItem item;
     private ActivityDetailviewBinding binding;
 
@@ -49,6 +68,17 @@ public class DetailviewActivity extends AppCompatActivity {
 
         Bundle extras = this.getIntent().getExtras();
 //        String id = extras.getString("crudOperations");
+/*
+//Datepicker1
+    btnTime =(Button) findViewById(R.id.BtnTime);
+    btnTime.setOnClickListener(this);
+    btnDate =(Button) findViewById(R.id.BtnDate);
+    btnDate.setOnClickListener(this);
+    tvTime =(TextView) findViewById(R.id.TvTime);
+    tvDate =(TextView) findViewById(R.id.TvDate);
+
+ */
+
 
 
         FloatingActionButton fab = binding.getRoot().findViewById(R.id.fab);
@@ -184,7 +214,53 @@ public class DetailviewActivity extends AppCompatActivity {
         Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
 
     }
+/*
+    //Datum und Uhrzeit Date1
+    @Override
+    public void onClick(View v) {
+        calendar = Calendar.getInstance();
+        switch(v.getId()){
+            case R.id.BtnTime:{
+                timePickerDialog = new TimePickerDialog(DetailviewActivity.this, new TimePickerDialog.OnTimeSetListener() {
+                    @Override
+                    public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
+                        Calendar timeCalendar = Calendar.getInstance();
+                        timeCalendar.set(Calendar.HOUR_OF_DAY, hourOfDay);
+                        timeCalendar.set(Calendar.MINUTE, minute);
+                        String timestring = DateUtils.formatDateTime(DetailviewActivity,this, timeCalendar.getTimeInMillis(),DateUtils.FORMAT_SHOW_TIME);
+                        tvTime.setText("Uhrzeit:" + timestring);
+                    }
+                    //Voreinstellung aktuelle Uhrzeit
+                    //Zeitzone nach Location
+                },calendar.get(Calendar.HOUR_OF_DAY),calendar.get(Calendar.MINUTE), DateFormat.is24HourFormat(DetailviewActivity.this));
+
+                timePickerDialog.show();
+                break;
+            }
+
+            case R.id.BtnDate:
+
+                datePickerDialog = new DatePickerDialog(DetailviewActivity.this, new DatePickerDialog.OnDateSetListener() {
+                    @Override
+                    public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
+                        Calendar dateCalendar =  Calendar.getInstance();
+
+                    dateCalendar.set(Calendar.YEAR, year);
+                    dateCalendar.set(Calendar.MONTH, month);
+                    dateCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+
+                    String dateString = DateUtils.formatDateTime(DetailviewActivity.this, dateCalendar.getTimeInMillis(), DateUtils.FORMAT_SHOW_TIME);
+                   tvDate.setText("Datum:" + dateString);
+                    }
+                },calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
+                datePickerDialog.show();
+                break;
+        }
+    }*/
 }
+
+
+
 
 
 

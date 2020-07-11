@@ -85,5 +85,53 @@
             app:layout_constraintRight_toRightOf="parent"
             app:srcCompat="@drawable/baseline_save_white_24dp" />
 
+        <!--Date2
+        -->
+
+        <DatePicker android:id="@+id/picker"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Auswahl?"/>
+
+        <TextView android:id="@+id/dateAsText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+          />
+
+
+        <!--Datepicker1
+        -->
+        <!--
+                <Button
+                    android:id="@+id/BtnDate"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Datum"
+                    tools:layout_editor_absoluteX="0dp"
+                    tools:layout_editor_absoluteY="179dp" />
+
+                <Button
+                    android:id="@+id/BtnTime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Uhrzeit"
+                    tools:layout_editor_absoluteX="106dp"
+                    tools:layout_editor_absoluteY="178dp" />
+
+                <TextView
+                    android:id="@+id/TvDate"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    tools:layout_editor_absoluteX="6dp"
+                    tools:layout_editor_absoluteY="238dp" />
+
+                <TextView
+                    android:id="@+id/TvTime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    tools:layout_editor_absoluteX="106dp"
+                    tools:layout_editor_absoluteY="238dp" />
+
+                    -->
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>
