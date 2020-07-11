@@ -3,19 +3,19 @@
 
 package org.dieschnittstelle.mobile.android.skeleton;
 
-import java.util.Date;
-
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.DatePicker;
 import android.widget.TextView;
 
+import java.util.Date;
 
-public class DatePickerActivity extends Activity {
+
+class DatePickerActivity extends Activity {
 
     @Override
-    public void onCreate (Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detailview);
 
@@ -37,3 +37,5 @@ public class DatePickerActivity extends Activity {
                 }
             }
         });
+    }
+}
