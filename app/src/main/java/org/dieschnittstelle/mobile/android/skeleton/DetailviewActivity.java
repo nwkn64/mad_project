@@ -252,7 +252,7 @@ public class DetailviewActivity extends AppCompatActivity {
                         dateCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
 
                         String dateString = DateUtils.formatDateTime(DetailviewActivity.this, dateCalendar.getTimeInMillis(), DateUtils.FORMAT_SHOW_TIME);
-                        item.setTime(dateString);
+                        item.setDate(dateString);
 
                         tvDate.setText("Datum:" + dateString);
                     }
