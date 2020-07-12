@@ -8,6 +8,7 @@ import androidx.room.Room;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -41,7 +42,7 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     public static final int CALL_DETAIL_VIEW_FOR_NEW_ITEM = 0;
-    public static final int CALL_DETAIL_VIEW_FOR_EXISTING_ITEM = 0;
+    public static final int CALL_DETAIL_VIEW_FOR_EXISTING_ITEM = 1;
 
     private ViewGroup listView;
     private ArrayAdapter<DataItem> listViewAdapter;
@@ -49,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
     private List<DataItem> itemsList = new ArrayList<>();
     private FloatingActionButton fab;
     private ProgressBar progressBar;
+    private boolean sorting_fav_date = true;
 
     private IDataItemCRUDOperations crudOperations;
 
@@ -187,16 +189,24 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()) {
             case R.id.deleteFirebase:
-                deleteFirebase();
-                return true;
+            deleteFirebase();
+            return true;
             case R.id.deleteRoom:
                 deleteRoom();
                 return true;
             case R.id.synchronize:
                 synchronize(false);
                 return true;
+            case R.id.FavouriteDate:
+                sorting_fav_date = true;
+                sorteListAndFocusItem (null);
+                return true;
+            case R.id.DateFavourite:
+                sorting_fav_date = false;
+                sorteListAndFocusItem (null);
+                return true;
             default:
-                return super.onCreateOptionsMenu((Menu) item);
+                return super.onOptionsItemSelected(item);
         }
     }
 
@@ -251,11 +261,28 @@ public class MainActivity extends AppCompatActivity {
 
     //Sortierung
     private void sorteListAndFocusItem(DataItem item) {
-        System.out.println(this.itemsList);
-        this.itemsList.sort(Comparator.
-                comparing(DataItem::isChecked) //falsche Methode?
-                .thenComparing(DataItem::getName));
+
+        // instead of sorting the itemsList, we call sort on the listViewAdapter, to only change
+        // the displayed order, not the actual order.
+
+        if(sorting_fav_date)
+        {
+            this.listViewAdapter.sort(Comparator.
+                    comparing(DataItem::isChecked)
+                    .thenComparing(DataItem::isFavourite)
+                    .thenComparing(DataItem::getDateTime)
+                    .thenComparing(DataItem::getName));
+
+        }else{
+            this.listViewAdapter.sort(Comparator.
+                    comparing(DataItem::isChecked)
+                    .thenComparing(DataItem::getDateTime)
+                    .thenComparing(DataItem::isFavourite)
+                    .thenComparing(DataItem::getName));
+        }
+
         this.listViewAdapter.notifyDataSetChanged();
+
 
 //Überprüft ob ein Item übergeben wurde
         if (item != null) {
@@ -263,6 +290,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
     }
+
 
     private void onListItemSelected(DataItem item) {
         System.out.println("miaumiau?!");
@@ -311,6 +339,10 @@ public class MainActivity extends AppCompatActivity {
                 existingItem.setFavourite(changedItem.isFavourite());
                 existingItem.setDescription(changedItem.getDescription());
                 existingItem.setContacts(changedItem.getContacts());
+                existingItem.setDate(changedItem.getDate());
+                existingItem.setDateTime(changedItem.getDateTime());
+                existingItem.setTime(changedItem.getTime());
+                existingItem.setTimeTime(changedItem.getTimeTime());
                 this.listViewAdapter.notifyDataSetChanged();
                 //Item das geupdated wurde soll sortiert werden
                 this.sorteListAndFocusItem(existingItem);

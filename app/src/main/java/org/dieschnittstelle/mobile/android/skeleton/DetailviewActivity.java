@@ -201,7 +201,7 @@ public class DetailviewActivity extends AppCompatActivity {
             showFeedbackMessage("Contact Permission have been franted!");
         }
         Cursor cursor = getContentResolver().query(contactid, null, null, null, null);
-        if (cursor.moveToFirst()) {
+        if (cursor != null && cursor.moveToFirst()) {
             String contactName = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
             String internalContactId = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts._ID));
 
@@ -222,6 +222,12 @@ public class DetailviewActivity extends AppCompatActivity {
         calendar = Calendar.getInstance();
         switch (v.getId()) {
             case R.id.BtnTime: {
+
+                // When a time was set before:
+                if(item.getTimeTime() > 0)
+                {
+                    calendar.setTimeInMillis(item.getTimeTime());
+                }
                 timePickerDialog = new TimePickerDialog(DetailviewActivity.this, new TimePickerDialog.OnTimeSetListener() {
                     @Override
                     public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
@@ -230,6 +236,7 @@ public class DetailviewActivity extends AppCompatActivity {
                         timeCalendar.set(Calendar.MINUTE, minute);
                         String timestring = DateUtils.formatDateTime(DetailviewActivity.this, timeCalendar.getTimeInMillis(), DateUtils.FORMAT_SHOW_TIME);
                        item.setTime(timestring);
+                       item.setTimeTime(timeCalendar.getTimeInMillis());
                         tvTime.setText("Uhrzeit:" + timestring);
                     }
                     //Voreinstellung aktuelle Uhrzeit
@@ -242,6 +249,11 @@ public class DetailviewActivity extends AppCompatActivity {
 
             case R.id.BtnDate:
 
+                // When a date was set before:
+                if(item.getDateTime() > 0)
+                {
+                    calendar.setTimeInMillis(item.getDateTime());
+                }
                 datePickerDialog = new DatePickerDialog(DetailviewActivity.this, new DatePickerDialog.OnDateSetListener() {
                     @Override
                     public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
@@ -251,8 +263,9 @@ public class DetailviewActivity extends AppCompatActivity {
                         dateCalendar.set(Calendar.MONTH, month);
                         dateCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
 
-                        String dateString = DateUtils.formatDateTime(DetailviewActivity.this, dateCalendar.getTimeInMillis(), DateUtils.FORMAT_SHOW_TIME);
+                        String dateString = DateUtils.formatDateTime(DetailviewActivity.this, dateCalendar.getTimeInMillis(), DateUtils.FORMAT_SHOW_DATE);
                         item.setDate(dateString);
+                        item.setDateTime(dateCalendar.getTimeInMillis());
 
                         tvDate.setText("Datum:" + dateString);
                     }
