@@ -8,6 +8,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -34,8 +35,13 @@ import java.util.ArrayList;
 public class DetailviewActivity extends AppCompatActivity {
 
     public static final String ARG_ITEM = "item";
+    public static final String ARG_LOCATION = "location";
+    public static final String ARG_COORDS = "coordinates";
 
-    public static final int CALL_CONTACT_PICKER = 0;
+
+    public static final int CALL_CONTACT_PICKER = 7;
+    public static final int LOCATION_RESULT = 8;
+    public static final int CONTACT_PERMISSION_RESULT = 9;
 
 
     private DataItem item;
@@ -73,8 +79,7 @@ public class DetailviewActivity extends AppCompatActivity {
 
             Intent callMapView = new Intent(this, MapsActivity.class);
             callMapView.putExtra("item", item);
-            startActivity(callMapView);
-
+            startActivityForResult(callMapView, LOCATION_RESULT);
 
         });
 
@@ -86,14 +91,11 @@ public class DetailviewActivity extends AppCompatActivity {
             item.setChecked(false);
         }
 
-
-
-
         this.showFeedbackMessage("Item has contacts" + item.getContacts());
 
         if (item.getContacts() != null && item.getContacts().size() > 0) {
             item.getContacts().forEach(contactUriString -> {
-                this.showContactDetails(Uri.parse(contactUriString), 4);
+                this.showContactDetails(Uri.parse(contactUriString), CONTACT_PERMISSION_RESULT);
             });
         }
 
@@ -108,7 +110,6 @@ public class DetailviewActivity extends AppCompatActivity {
         returnData.putExtra(ARG_ITEM, item);
 
         setResult(Activity.RESULT_OK, returnData);
-
         finish();
     }
 
@@ -148,6 +149,16 @@ public class DetailviewActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         if (requestCode == CALL_CONTACT_PICKER && resultCode == Activity.RESULT_OK) {
             addSelectedContactToContacts(data.getData());
+        }
+        else if (requestCode == LOCATION_RESULT && resultCode == Activity.RESULT_OK) {
+            // The "MapsActivity" finished and we parse the result.
+            String loc = data.getStringExtra(ARG_LOCATION);
+            String coor = data.getStringExtra(ARG_COORDS);
+            // We now update THIS item.
+            item.setGeoCoordinates(coor);
+            item.setLocation(loc);
+
+            binding.invalidateAll();
         } else {
             super.onActivityResult(requestCode, resultCode, data);
         }
@@ -161,7 +172,7 @@ public class DetailviewActivity extends AppCompatActivity {
         if (item.getContacts().indexOf(contactid.toString()) == -1) {
             item.getContacts().add(contactid.toString());
         }
-        showContactDetails(contactid, 4);
+        showContactDetails(contactid, CONTACT_PERMISSION_RESULT);
     }
 
 
@@ -181,12 +192,13 @@ public class DetailviewActivity extends AppCompatActivity {
             showFeedbackMessage("Contact Permission have been franted!");
         }
         Cursor cursor = getContentResolver().query(contactid, null, null, null, null);
-        if (cursor.moveToFirst()) {
+        if (cursor != null && cursor.moveToFirst()) {
             String contactName = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
             String internalContactId = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts._ID));
 
             showFeedbackMessage("Got result from Contact picker" + contactName + " with id " + internalContactId);
-
+        } else {
+            showFeedbackMessage("The cursor was null - cache problem?");
         }
     }
 

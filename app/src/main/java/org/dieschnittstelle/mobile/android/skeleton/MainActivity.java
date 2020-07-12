@@ -3,6 +3,7 @@ package org.dieschnittstelle.mobile.android.skeleton;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -40,7 +41,7 @@ import javax.annotation.Nullable;
 
 public class MainActivity extends AppCompatActivity {
     public static final int CALL_DETAIL_VIEW_FOR_NEW_ITEM = 0;
-    public static final int CALL_DETAIL_VIEW_FOR_EXISTING_ITEM = 0;
+    public static final int CALL_DETAIL_VIEW_FOR_EXISTING_ITEM = 1;
 
     private ViewGroup listView;
     private ArrayAdapter<DataItem> listViewAdapter;
@@ -248,7 +249,7 @@ public class MainActivity extends AppCompatActivity {
     //Sortierung
     private void sorteListAndFocusItem(DataItem item) {
         this.itemsList.sort(Comparator.
-                comparing(DataItem::isChecked) //falsche Methode?
+                comparing(DataItem::isChecked)
                 .thenComparing(DataItem::getName));
         this.listViewAdapter.notifyDataSetChanged();
 
@@ -304,17 +305,17 @@ public class MainActivity extends AppCompatActivity {
                 existingItem.setFavourite(changedItem.isFavourite());
                 existingItem.setDescription(changedItem.getDescription());
                 existingItem.setContacts(changedItem.getContacts());
+                existingItem.setLocation(changedItem.getLocation());
+                existingItem.setGeoCoordinates(changedItem.getGeoCoordinates());
                 this.listViewAdapter.notifyDataSetChanged();
                 //Item das geupdated wurde soll sortiert werden
                 this.sorteListAndFocusItem(existingItem);
 
             } else {
                 showFeedbackMessage("Updated" + changedItem.getName() + "Updated Item cannot be found");
-
             }
         } else {
             showFeedbackMessage("Updated" + changedItem.getName() + "Item could not be updated in database");
-
         }
     }
 

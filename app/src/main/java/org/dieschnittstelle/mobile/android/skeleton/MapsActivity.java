@@ -13,6 +13,7 @@ package org.dieschnittstelle.mobile.android.skeleton;// Copyright 2020 Google LL
 // limitations under the License.
 
 
+import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -164,13 +165,11 @@ public class MapsActivity extends AppCompatActivity
                 switch (which) {
                     case DialogInterface.BUTTON_POSITIVE:
                         //Yes button clicked
-
-
-                        Intent callMapView = new Intent(MapsActivity.this, DetailviewActivity.class);
-
-                        callMapView.putExtra("item", item);
-                        startActivity(callMapView);
-
+                        // go back to the DetailviewActivity that opened this MapsActivity.
+                        Intent returnData = new Intent();
+                        returnData.putExtra(DetailviewActivity.ARG_LOCATION, item.getLocation());
+                        returnData.putExtra(DetailviewActivity.ARG_COORDS, item.getGeoCoordinates());
+                        setResult(Activity.RESULT_OK, returnData);
                         finish();
                         break;
 
