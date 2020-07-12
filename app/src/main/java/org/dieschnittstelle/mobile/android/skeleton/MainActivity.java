@@ -271,12 +271,14 @@ public class MainActivity extends AppCompatActivity {
                     comparing(DataItem::isChecked)
                     .thenComparing(DataItem::isFavourite)
                     .thenComparing(DataItem::getDateTime)
+                    .thenComparing(DataItem::getTimeTime)
                     .thenComparing(DataItem::getName));
 
         }else{
             this.listViewAdapter.sort(Comparator.
                     comparing(DataItem::isChecked)
                     .thenComparing(DataItem::getDateTime)
+                    .thenComparing(DataItem::getTimeTime)
                     .thenComparing(DataItem::isFavourite)
                     .thenComparing(DataItem::getName));
         }
