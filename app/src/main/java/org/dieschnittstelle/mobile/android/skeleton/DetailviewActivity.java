@@ -18,9 +18,11 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
@@ -59,6 +61,11 @@ public class DetailviewActivity extends AppCompatActivity {
     private DataItem item;
     private ActivityDetailviewBinding binding;
 
+
+    private ArrayAdapter<String> contactsViewAdapter;
+    private View contactList;
+
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -94,6 +101,12 @@ public class DetailviewActivity extends AppCompatActivity {
             this.item.setChecked(false);
             System.out.println(this.item);
         }
+
+        ArrayAdapter<String> itemsAdapter =
+                new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, this.item.getContacts());
+
+        ListView listView = (ListView) findViewById(R.id.contactsList);
+        listView.setAdapter(itemsAdapter);
 
         binding.setController(this);
 
@@ -143,10 +156,14 @@ public class DetailviewActivity extends AppCompatActivity {
                 selectAndAddContact();
                 return true;
             case R.id.deleteItem:
-                Toast.makeText(this, "Something else was selected...",
-                        Toast.LENGTH_SHORT).show();
-                return true;
 
+                Intent returnData = new Intent();
+
+                returnData.putExtra(ARG_ITEM, this.item);
+
+                this.setResult(5, returnData);
+
+                finish();
         }
         return false;
     }
@@ -222,7 +239,7 @@ public class DetailviewActivity extends AppCompatActivity {
 
                 if (phoneNumberType == ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE) {
                     Log.i("DetailViewActivity", "found mobile Number: " + number);
-                } else{
+                } else {
                     Log.i("DetailViewActivity", "found other Number: " + number);
 
                 }
@@ -238,7 +255,7 @@ public class DetailviewActivity extends AppCompatActivity {
                     null
             );
 
-            while(emailCursor.moveToNext()){
+            while (emailCursor.moveToNext()) {
                 String email = emailCursor.getString(emailCursor.getColumnIndex(ContactsContract.CommonDataKinds.Email.ADDRESS));
                 Log.i("DetailViewActivity", "email is" + email);
 

@@ -78,6 +78,7 @@ public class FireBaseCRUDOperations implements IDataItemCRUDOperations {
 
     @Override
     public boolean deleteDataItem(long id) {
+        System.out.println("here");
         dbTasks.child(String.valueOf(id)).removeValue();
         return true;
     }
