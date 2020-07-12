@@ -152,6 +152,7 @@ public class DataItem implements Serializable {
             this.contacts = Arrays.asList(this.contactsStr.split(CONTACTS_SEPARATOR))
                     .stream()
                     .map(c -> c.trim())
+                    .filter(c -> c.length() > 0)
                     .collect(Collectors.toList());
             this.contactsStr = null;
         }

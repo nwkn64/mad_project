@@ -10,7 +10,6 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
 
@@ -71,9 +70,7 @@ public class FireBaseCRUDOperations implements IDataItemCRUDOperations {
 
     @Override
     public boolean updateDataItem(DataItem item) {
-        System.out.println(item.getId());
 
-        System.out.println("hier?!?!");
         dbTasks.child(String.valueOf(item.getId())).setValue(item);
 
         return true;
@@ -81,7 +78,8 @@ public class FireBaseCRUDOperations implements IDataItemCRUDOperations {
 
     @Override
     public boolean deleteDataItem(long id) {
-        return false;
+        dbTasks.child(String.valueOf(id)).removeValue();
+        return true;
     }
 
     @Override

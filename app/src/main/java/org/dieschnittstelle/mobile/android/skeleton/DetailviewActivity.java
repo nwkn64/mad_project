@@ -63,14 +63,11 @@ public class DetailviewActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         binding = DataBindingUtil.setContentView(this, R.layout.activity_detailview);
 
-        Bundle extras = this.getIntent().getExtras();
-//        String id = extras.getString("crudOperations");
 
-//Datepicker1
-        btnTime =  findViewById(R.id.BtnTime);
-        btnDate =  findViewById(R.id.BtnDate);
-        tvTime =  findViewById(R.id.TvTime);
-        tvDate =  findViewById(R.id.TvDate);
+        btnTime = findViewById(R.id.BtnTime);
+        btnDate = findViewById(R.id.BtnDate);
+        tvTime = findViewById(R.id.TvTime);
+        tvDate = findViewById(R.id.TvDate);
 
 
         FloatingActionButton fab = binding.getRoot().findViewById(R.id.fab);
@@ -109,11 +106,11 @@ public class DetailviewActivity extends AppCompatActivity {
             });
         }
 
-        btnTime.setOnClickListener((view)-> {
+        btnTime.setOnClickListener((view) -> {
             onClick(view);
         });
 
-        btnDate.setOnClickListener((view)-> {
+        btnDate.setOnClickListener((view) -> {
             onClick(view);
         });
     }
@@ -144,7 +141,7 @@ public class DetailviewActivity extends AppCompatActivity {
             case R.id.addContact:
                 selectAndAddContact();
                 return true;
-            case R.id.doSomethingelse:
+            case R.id.deleteItem:
                 Toast.makeText(this, "Something else was selected...",
                         Toast.LENGTH_SHORT).show();
                 return true;
@@ -198,15 +195,38 @@ public class DetailviewActivity extends AppCompatActivity {
             requestPermissions(new String[]{Manifest.permission.READ_CONTACTS}, requestCode);
             return;
         } else {
-            showFeedbackMessage("Contact Permission have been franted!");
+            showFeedbackMessage("Contact Permission have been granted!");
         }
         Cursor cursor = getContentResolver().query(contactid, null, null, null, null);
-        if (cursor.moveToFirst()) {
+        if (cursor != null && cursor.moveToFirst()) {
             String contactName = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
             String internalContactId = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts._ID));
 
+
             showFeedbackMessage("Got result from Contact picker" + contactName + " with id " + internalContactId);
 
+
+            Cursor phoneCursor = getContentResolver().query(
+                    ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                    null,
+                    ContactsContract.CommonDataKinds.Phone._ID + "= ?",
+                    new String[]{internalContactId},
+                    null,
+                    null
+            );
+
+            while (phoneCursor.moveToNext()) {
+                String number = phoneCursor.getString(phoneCursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER))
+
+            }
+         /*   if (item.getContacts() == null) {
+                item.setContacts(new ArrayList<>());
+            }
+            if (item.getContacts().indexOf(internalContactId) == -1) {
+                item.getContacts().add(contactid.toString());
+            }
+
+          */
         }
     }
 
@@ -214,7 +234,6 @@ public class DetailviewActivity extends AppCompatActivity {
         Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
 
     }
-
 
 
     //Datum und Uhrzeit Date1
@@ -229,7 +248,7 @@ public class DetailviewActivity extends AppCompatActivity {
                         timeCalendar.set(Calendar.HOUR_OF_DAY, hourOfDay);
                         timeCalendar.set(Calendar.MINUTE, minute);
                         String timestring = DateUtils.formatDateTime(DetailviewActivity.this, timeCalendar.getTimeInMillis(), DateUtils.FORMAT_SHOW_TIME);
-                       item.setTime(timestring);
+                        item.setTime(timestring);
                         tvTime.setText("Uhrzeit:" + timestring);
                     }
                     //Voreinstellung aktuelle Uhrzeit
@@ -251,12 +270,14 @@ public class DetailviewActivity extends AppCompatActivity {
                         dateCalendar.set(Calendar.MONTH, month);
                         dateCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
 
-                        String dateString = DateUtils.formatDateTime(DetailviewActivity.this, dateCalendar.getTimeInMillis(), DateUtils.FORMAT_SHOW_TIME);
+                        // String dateString = DateUtils.formatDateTime(DetailviewActivity.this, dateCalendar.getTimeInMillis(), DateUtils.FORMAT_SHOW_TIME);
+                        String dateString = String.valueOf(dayOfMonth) + "." + String.valueOf(month) + "." + String.valueOf(year);
                         item.setDate(dateString);
 
                         tvDate.setText("Datum:" + dateString);
                     }
-                }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
+                },
+                        calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
                 datePickerDialog.show();
                 break;
         }
