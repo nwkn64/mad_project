@@ -9,11 +9,11 @@
         <import type ="android.graphics.Color"/>
         <variable
             name="item"
-            type="model.DataItem"/>
+            type="org.dieschnittstelle.mobile.android.skeleton.model.DataItem" />
             <variable
                 name="controller"
             type="org.dieschnittstelle.mobile.android.skeleton.MainActivity"
-        android:background="@{item.isExpired? Color.rgb(165,14,0):Color.WHITE" />
+         />
 
     </data>
 
@@ -21,6 +21,7 @@
              android:layout_width="match_parent"
              android:layout_height="wrap_content"
              android:orientation="horizontal"
+             android:background="@{item.isExpired? Color.rgb(165,14,0):Color.WHITE}"
              app:layout_constraintTop_toTopOf="parent"
          >
 
