@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -21,7 +22,6 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.DatePicker;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -30,6 +30,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.databinding.DataBindingUtil;
@@ -41,6 +42,7 @@ import org.dieschnittstelle.mobile.android.skeleton.model.DataItem;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 
 public class DetailviewActivity extends AppCompatActivity {
 
@@ -123,11 +125,31 @@ public class DetailviewActivity extends AppCompatActivity {
         }
 
         this.showFeedbackMessage("Item has contacts" + item.getContacts());
-        ArrayAdapter<String> itemsAdapter =
-                new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, this.item.getContacts());
 
-        ListView listView = (ListView) findViewById(R.id.contactsList);
-        listView.setAdapter(itemsAdapter);
+
+        if (item.getContacts().size() > 0) {
+            List<String> contactNames = new ArrayList<String>();
+
+            item.getContacts().forEach(obj -> {
+
+
+                Cursor cursor = getContentResolver().query(Uri.parse(obj), null, null, null, null);
+                if (cursor != null && cursor.moveToFirst()) {
+
+                    String contactName = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
+                    contactNames.add(contactName);
+
+                }
+            });
+
+
+            ArrayAdapter<String> itemsAdapter =
+                    new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, contactNames);
+            ListView listView =  findViewById(R.id.contactsList);
+            listView.setAdapter(itemsAdapter);
+
+        }
+
 
         binding.setController(this);
 
@@ -180,15 +202,38 @@ public class DetailviewActivity extends AppCompatActivity {
                 return true;
             case R.id.deleteItem:
 
-                Intent returnData = new Intent();
 
-                returnData.putExtra(ARG_ITEM, this.item);
+                DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        switch (which) {
+                            case DialogInterface.BUTTON_POSITIVE:
+                                resultDelete();
+                                break;
 
-                this.setResult(5, returnData);
+                            case DialogInterface.BUTTON_NEGATIVE:
+                                break;
+                        }
+                    }
+                };
 
-                finish();
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setMessage("Are you sure?").setPositiveButton("Yes", dialogClickListener)
+                        .setNegativeButton("No", dialogClickListener).show();
+
         }
         return false;
+    }
+
+
+    private void resultDelete() {
+        Intent returnData = new Intent();
+
+        returnData.putExtra(ARG_ITEM, this.item);
+
+        this.setResult(5, returnData);
+
+        finish();
     }
 
     private void selectAndAddContact() {
@@ -202,8 +247,7 @@ public class DetailviewActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         if (requestCode == CALL_CONTACT_PICKER && resultCode == Activity.RESULT_OK) {
             addSelectedContactToContacts(data.getData());
-        }
-        else if (requestCode == LOCATION_RESULT && resultCode == Activity.RESULT_OK) {
+        } else if (requestCode == LOCATION_RESULT && resultCode == Activity.RESULT_OK) {
             // The "MapsActivity" finished and we parse the result.
             String loc = data.getStringExtra(ARG_LOCATION);
             String coor = data.getStringExtra(ARG_COORDS);
@@ -220,14 +264,16 @@ public class DetailviewActivity extends AppCompatActivity {
     private void addSelectedContactToContacts(Uri contactid) {
 
         if (item.getContacts() != null) {
-            item.setContacts(new ArrayList<>());
+            List<String> contacts = item.getContacts();
+            contacts.add(String.valueOf(contactid));
+            item.setContacts(contacts);
         }
         if (item.getContacts().indexOf(contactid.toString()) == -1) {
             item.getContacts().add(contactid.toString());
         }
         showContactDetails(contactid, CONTACT_PERMISSION_RESULT);
+
     }
-//modifiziert
 
     public void onRequestPermissionResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResult) {
 
@@ -319,8 +365,7 @@ public class DetailviewActivity extends AppCompatActivity {
             case R.id.BtnTime: {
 
                 // When a time was set before:
-                if(item.getTimeTime() > 0)
-                {
+                if (item.getTimeTime() > 0) {
                     calendar.setTimeInMillis(item.getTimeTime());
                 }
                 timePickerDialog = new TimePickerDialog(DetailviewActivity.this, new TimePickerDialog.OnTimeSetListener() {
@@ -331,8 +376,8 @@ public class DetailviewActivity extends AppCompatActivity {
                         timeCalendar.set(Calendar.MINUTE, minute);
                         String timestring = DateUtils.formatDateTime(DetailviewActivity.this, timeCalendar.getTimeInMillis(), DateUtils.FORMAT_SHOW_TIME);
                         item.setTime(timestring);
-                       item.setTime(timestring);
-                       item.setTimeTime(timeCalendar.getTimeInMillis());
+                        item.setTime(timestring);
+                        item.setTimeTime(timeCalendar.getTimeInMillis());
                         tvTime.setText("Uhrzeit:" + timestring);
                     }
                     //Voreinstellung aktuelle Uhrzeit
@@ -346,8 +391,7 @@ public class DetailviewActivity extends AppCompatActivity {
             case R.id.BtnDate:
 
                 // When a date was set before:
-                if(item.getDateTime() > 0)
-                {
+                if (item.getDateTime() > 0) {
                     calendar.setTimeInMillis(item.getDateTime());
                 }
                 datePickerDialog = new DatePickerDialog(DetailviewActivity.this, new DatePickerDialog.OnDateSetListener() {

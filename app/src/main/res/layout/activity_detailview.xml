@@ -129,11 +129,10 @@
         <ListView
             android:id="@+id/contactsList"
             android:layout_width="match_parent"
-            android:layout_height="40dp"
-            tools:layout_editor_absoluteX="16dp"
-            tools:layout_editor_absoluteY="374dp"
+            android:layout_height="100dp"
+            android:layout_marginBottom="60dp"
             app:layout_constraintBottom_toBottomOf="parent"
-            />
+            tools:layout_editor_absoluteX="0dp" />
 
         <DatePicker
             android:id="@+id/picker"

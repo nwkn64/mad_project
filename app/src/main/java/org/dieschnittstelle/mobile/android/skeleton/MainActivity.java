@@ -20,10 +20,6 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.databinding.DataBindingUtil;
-
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.databinding.DataBindingUtil;
@@ -45,7 +41,6 @@ import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.BaseTransientBottomBar;
 import com.google.android.material.snackbar.Snackbar;
-
 import com.google.android.material.tabs.TabLayout;
 
 import org.dieschnittstelle.mobile.android.skeleton.databinding.ActivityMainListitemBinding;
@@ -61,7 +56,6 @@ import org.dieschnittstelle.mobile.android.tasks.UpdateDataItemTaskWithFuture;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-
 
 import javax.annotation.Nullable;
 
@@ -124,7 +118,21 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 LatLng geoPos = new LatLng(geoLat, geoLong);
                 map.addMarker(new MarkerOptions()
                         .position(geoPos)
-                        .title(obj.getName()));
+                        .title(String.valueOf(obj.getId())));
+                map.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+                    @Override
+                    public boolean onMarkerClick(Marker marker) {
+
+                        System.out.println(marker.getTitle());
+
+                        itemsList.forEach(obj -> {
+                            if(obj.getId() == Long.parseLong(marker.getTitle())){
+                                onListItemSelected(obj);
+                            }
+                        });
+                        return false;
+                    }
+                });
             }
 
 
@@ -246,7 +254,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
         this.listView = this.findViewById(R.id.listView);
-        this.listView.setVisibility(View.VISIBLE);
+        listView.setVisibility(View.VISIBLE);
+
         this.mapsView = this.findViewById(R.id.mapsView);
 
         this.fab = this.findViewById(R.id.fab);
@@ -260,9 +269,21 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 System.out.println(tab.getPosition());
                 switch (tab.getPosition()) {
                     case 0:
+
+
                         listView.setVisibility(View.VISIBLE);
+
                         mapsView.setVisibility(View.INVISIBLE);
+
+
                     case 1:
+
+
+                        listView.setVisibility(View.INVISIBLE);
+
+
+                        mapsView.setVisibility(View.VISIBLE);
+
 
                         Places.initialize(getApplicationContext(), "AIzaSyB3rlEAF2-E_c8dxbMz3tN60h3Aw-1SEZ0");
                         placesClient = Places.createClient(MainActivity.this);
@@ -274,9 +295,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 .findFragmentById(R.id.map);
                         mapFragment.getMapAsync(MainActivity.this);
 
-
-                        mapsView.setVisibility(View.VISIBLE);
-                        listView.setVisibility(View.INVISIBLE);
 
                 }
             }
@@ -360,11 +378,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                                     roomCrud,
                                                     progressBar,
                                                     created -> {
+                                                        this.listViewAdapter.clear();
+
                                                         this.listViewAdapter.add(created);
                                                         sorteListAndFocusItem(null);
                                                         //Damit neues Item sortiert werden kann
                                                     }).execute(dat);
                                         });
+                                        this.listViewAdapter.clear();
+
                                         listViewAdapter.addAll(fireBaseItems);
                                         //ruft nach starten direkt die Sortierung auf
 
@@ -376,6 +398,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     }).execute();
         } else {
             if (initialLoad) {
+                listViewAdapter.clear();
                 new ReadAllDataItemsTask(progressBar,
                         crudOperations,
                         items -> {
@@ -396,8 +419,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()) {
             case R.id.deleteFirebase:
-            deleteFirebase();
-            return true;
+                deleteFirebase();
+                return true;
             case R.id.deleteRoom:
                 deleteRoom();
                 return true;
@@ -406,11 +429,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 return true;
             case R.id.FavouriteDate:
                 sorting_fav_date = true;
-                sorteListAndFocusItem (null);
+                sorteListAndFocusItem(null);
                 return true;
             case R.id.DateFavourite:
                 sorting_fav_date = false;
-                sorteListAndFocusItem (null);
+                sorteListAndFocusItem(null);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -472,8 +495,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         // instead of sorting the itemsList, we call sort on the listViewAdapter, to only change
         // the displayed order, not the actual order.
 
-        if(sorting_fav_date)
-        {
+        if (sorting_fav_date) {
             this.listViewAdapter.sort(Comparator.
                     comparing(DataItem::isChecked)
                     .thenComparing(DataItem::isFavourite)
@@ -481,7 +503,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     .thenComparing(DataItem::getTimeTime)
                     .thenComparing(DataItem::getName));
 
-        }else{
+        } else {
             this.listViewAdapter.sort(Comparator.
                     comparing(DataItem::isChecked)
                     .thenComparing(DataItem::getDateTime)
@@ -611,34 +633,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
             } else {
                 super.onActivityResult(requestCode, resultCode, data);
-        System.out.println(resultCode);
-        System.out.println(requestCode);
-
-        if (resultCode == 5) {
-            DataItem item = (DataItem) data.getSerializableExtra(DetailviewActivity.ARG_ITEM);
-            crudOperations.deleteDataItem(item.getId());
-            this.listViewAdapter.remove(item);
-            this.listViewAdapter.notifyDataSetChanged();
-            //Item das geupdated wurde soll sortiert werden
-            this.sorteListAndFocusItem(null);
-
-        } else {
-            if (requestCode == CALL_DETAIL_VIEW_FOR_NEW_ITEM) {
-                if (resultCode == Activity.RESULT_OK) {
-                    DataItem item = (DataItem) data.getSerializableExtra(DetailviewActivity.ARG_ITEM);
-                    createItemAndAddItToList(item);
-                } else if (resultCode == Activity.RESULT_CANCELED) {
-                    showFeedbackMessage(" item name was canceled");
-                } else {
-                    showFeedbackMessage("no item name received, what's wrong?");
-                }
-            } else if (requestCode == CALL_DETAIL_VIEW_FOR_EXISTING_ITEM) {
-                if (resultCode == Activity.RESULT_OK) {
-                    DataItem item = (DataItem) data.getSerializableExtra(DetailviewActivity.ARG_ITEM);
-                    updateItemAndUpdateList(item);
-                }
-            } else {
-                super.onActivityResult(requestCode, resultCode, data);
+                System.out.println(resultCode);
+                System.out.println(requestCode);
 
             }
         }

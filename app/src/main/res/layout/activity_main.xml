@@ -20,7 +20,9 @@
         <com.google.android.material.tabs.TabItem
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="List"/>
+            android:text="List">
+
+        </com.google.android.material.tabs.TabItem>
 
 
         <com.google.android.material.tabs.TabItem
@@ -37,6 +39,7 @@
         android:layout_height="650dp"
         android:orientation="horizontal"
         android:visibility="gone"
+
         app:layout_constraintTop_toBottomOf="@+id/tabs"
         tools:layout_editor_absoluteX="96dp">
 
