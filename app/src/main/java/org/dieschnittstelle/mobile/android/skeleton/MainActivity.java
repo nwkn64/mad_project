@@ -25,6 +25,7 @@ import androidx.core.content.ContextCompat;
 import androidx.databinding.DataBindingUtil;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -35,6 +36,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.BaseTransientBottomBar;
@@ -96,16 +98,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         setContentView(R.layout.activity_main);
 
 
-
         this.initialiseView();
-
 
 
     }
 
     @Override
     public void onMapReady(GoogleMap map) {
-        System.out.println("hier");
 
         this.map = map;
 
@@ -114,12 +113,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 Double geoLat = Double.parseDouble(obj.getGeoCoordinates().split(",")[0]);
                 Double geoLong = Double.parseDouble(obj.getGeoCoordinates().split(",")[1]);
 
-                System.out.println("geo");
-                System.out.println(geoLat);
-                LatLng sydney = new LatLng(geoLat, geoLong);
+                LatLng geoPos = new LatLng(geoLat, geoLong);
                 map.addMarker(new MarkerOptions()
-                        .position(sydney)
-                        .title("Marker in Sydney"));
+                        .position(geoPos)
+                        .title(obj.getName()));
             }
 
 
@@ -241,6 +238,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
         this.listView = this.findViewById(R.id.listView);
+        this.listView.setVisibility(View.VISIBLE);
         this.mapsView = this.findViewById(R.id.mapsView);
 
         this.fab = this.findViewById(R.id.fab);
@@ -251,15 +249,23 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         tabView.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
+                System.out.println(tab.getPosition());
                 switch (tab.getPosition()) {
                     case 0:
                         listView.setVisibility(View.VISIBLE);
                         mapsView.setVisibility(View.INVISIBLE);
                     case 1:
 
+                        Places.initialize(getApplicationContext(), "AIzaSyB3rlEAF2-E_c8dxbMz3tN60h3Aw-1SEZ0");
+                        placesClient = Places.createClient(MainActivity.this);
+
+                        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(MainActivity.this);
+
+
                         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                                .findFragmentById(R.id.mapsView);
-                        mapFragment.getMapAsync(MainActivity.this::onMapReady);
+                                .findFragmentById(R.id.map);
+                        mapFragment.getMapAsync(MainActivity.this);
+
 
                         mapsView.setVisibility(View.VISIBLE);
                         listView.setVisibility(View.INVISIBLE);
@@ -311,7 +317,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
         synchronize(true);
-
 
 
     }
@@ -588,4 +593,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     this.sorteListAndFocusItem(item); //feedbackmessage auch nach sortierung
                 });
     }
+
+
 }

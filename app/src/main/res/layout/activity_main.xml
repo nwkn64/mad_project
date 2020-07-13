@@ -36,7 +36,7 @@
         android:layout_width="match_parent"
         android:layout_height="650dp"
         android:orientation="horizontal"
-        android:visibility="invisible"
+        android:visibility="gone"
         app:layout_constraintTop_toBottomOf="@+id/tabs"
         tools:layout_editor_absoluteX="96dp">
 
@@ -54,7 +54,7 @@
     </LinearLayout>
 
     <ListView
-        android:visibility="visible"
+        android:visibility="gone"
         android:id="@+id/listView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
