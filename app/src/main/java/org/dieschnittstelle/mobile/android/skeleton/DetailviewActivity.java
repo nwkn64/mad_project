@@ -48,7 +48,7 @@ public class DetailviewActivity extends AppCompatActivity {
         binding = DataBindingUtil.setContentView(this, R.layout.activity_detailview);
 
         Bundle extras = this.getIntent().getExtras();
-        String id = extras.getString("crudOperations");
+//        String id = extras.getString("crudOperations");
 
 
         FloatingActionButton fab = binding.getRoot().findViewById(R.id.fab);
