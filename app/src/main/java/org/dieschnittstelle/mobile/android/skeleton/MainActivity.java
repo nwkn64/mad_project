@@ -20,6 +20,10 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.databinding.DataBindingUtil;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.databinding.DataBindingUtil;
@@ -41,6 +45,7 @@ import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.BaseTransientBottomBar;
 import com.google.android.material.snackbar.Snackbar;
+
 import com.google.android.material.tabs.TabLayout;
 
 import org.dieschnittstelle.mobile.android.skeleton.databinding.ActivityMainListitemBinding;
@@ -57,12 +62,13 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+
 import javax.annotation.Nullable;
 
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
     public static final int CALL_DETAIL_VIEW_FOR_NEW_ITEM = 0;
-    public static final int CALL_DETAIL_VIEW_FOR_EXISTING_ITEM = 0;
+    public static final int CALL_DETAIL_VIEW_FOR_EXISTING_ITEM = 1;
 
     private ViewGroup listView;
     private ViewGroup mapsView;
@@ -73,6 +79,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private List<DataItem> itemsList = new ArrayList<>();
     private FloatingActionButton fab;
     private ProgressBar progressBar;
+    private boolean sorting_fav_date = true;
+
     private IDataItemCRUDOperations crudOperations;
     private boolean locationPermissionGranted;
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
@@ -318,7 +326,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         synchronize(true);
 
-
     }
 
     private void synchronize(Boolean initialLoad) {
@@ -389,16 +396,24 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()) {
             case R.id.deleteFirebase:
-                deleteFirebase();
-                return true;
+            deleteFirebase();
+            return true;
             case R.id.deleteRoom:
                 deleteRoom();
                 return true;
             case R.id.synchronize:
                 synchronize(false);
                 return true;
+            case R.id.FavouriteDate:
+                sorting_fav_date = true;
+                sorteListAndFocusItem (null);
+                return true;
+            case R.id.DateFavourite:
+                sorting_fav_date = false;
+                sorteListAndFocusItem (null);
+                return true;
             default:
-                return super.onCreateOptionsMenu((Menu) item);
+                return super.onOptionsItemSelected(item);
         }
     }
 
@@ -453,10 +468,30 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     //Sortierung
     private void sorteListAndFocusItem(DataItem item) {
-        this.itemsList.sort(Comparator.
-                comparing(DataItem::isChecked) //falsche Methode?
-                .thenComparing(DataItem::getName));
+
+        // instead of sorting the itemsList, we call sort on the listViewAdapter, to only change
+        // the displayed order, not the actual order.
+
+        if(sorting_fav_date)
+        {
+            this.listViewAdapter.sort(Comparator.
+                    comparing(DataItem::isChecked)
+                    .thenComparing(DataItem::isFavourite)
+                    .thenComparing(DataItem::getDateTime)
+                    .thenComparing(DataItem::getTimeTime)
+                    .thenComparing(DataItem::getName));
+
+        }else{
+            this.listViewAdapter.sort(Comparator.
+                    comparing(DataItem::isChecked)
+                    .thenComparing(DataItem::getDateTime)
+                    .thenComparing(DataItem::getTimeTime)
+                    .thenComparing(DataItem::isFavourite)
+                    .thenComparing(DataItem::getName));
+        }
+
         this.listViewAdapter.notifyDataSetChanged();
+
 
 //Überprüft ob ein Item übergeben wurde
         if (item != null) {
@@ -529,6 +564,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 existingItem.setFavourite(changedItem.isFavourite());
                 existingItem.setDescription(changedItem.getDescription());
                 existingItem.setContacts(changedItem.getContacts());
+                existingItem.setDate(changedItem.getDate());
+                existingItem.setDateTime(changedItem.getDateTime());
+                existingItem.setTime(changedItem.getTime());
+                existingItem.setTimeTime(changedItem.getTimeTime());
                 this.listViewAdapter.notifyDataSetChanged();
                 //Item das geupdated wurde soll sortiert werden
                 this.sorteListAndFocusItem(existingItem);
@@ -546,6 +585,34 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
 
+
+        if (resultCode == 5) {
+            DataItem item = (DataItem) data.getSerializableExtra(DetailviewActivity.ARG_ITEM);
+            crudOperations.deleteDataItem(item.getId());
+            this.listViewAdapter.remove(item);
+            this.listViewAdapter.notifyDataSetChanged();
+            //Item das geupdated wurde soll sortiert werden
+            this.sorteListAndFocusItem(null);
+
+        } else {
+            if (requestCode == CALL_DETAIL_VIEW_FOR_NEW_ITEM) {
+                if (resultCode == Activity.RESULT_OK) {
+                    DataItem item = (DataItem) data.getSerializableExtra(DetailviewActivity.ARG_ITEM);
+                    createItemAndAddItToList(item);
+                } else if (resultCode == Activity.RESULT_CANCELED) {
+                    showFeedbackMessage(" item name was canceled");
+                } else {
+                    showFeedbackMessage("no item name received, what's wrong?");
+                }
+            } else if (requestCode == CALL_DETAIL_VIEW_FOR_EXISTING_ITEM) {
+                if (resultCode == Activity.RESULT_OK) {
+                    DataItem item = (DataItem) data.getSerializableExtra(DetailviewActivity.ARG_ITEM);
+                    updateItemAndUpdateList(item);
+                }
+            } else {
+                super.onActivityResult(requestCode, resultCode, data);
+        System.out.println(resultCode);
+        System.out.println(requestCode);
 
         if (resultCode == 5) {
             DataItem item = (DataItem) data.getSerializableExtra(DetailviewActivity.ARG_ITEM);

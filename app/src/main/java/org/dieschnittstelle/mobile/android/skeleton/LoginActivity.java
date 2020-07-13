@@ -3,12 +3,10 @@ package org.dieschnittstelle.mobile.android.skeleton;
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
@@ -17,7 +15,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.databinding.DataBindingUtil;
-
 
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.android.material.textview.MaterialTextView;
@@ -31,11 +28,7 @@ import org.dieschnittstelle.mobile.android.skeleton.databinding.ActivityLoginBin
 import org.dieschnittstelle.mobile.android.skeleton.model.FireBaseCRUDOperations;
 import org.dieschnittstelle.mobile.android.skeleton.model.IDataItemCRUDOperations;
 import org.dieschnittstelle.mobile.android.skeleton.model.RoomDataItemCRUDOperationsImpl;
-import org.dieschnittstelle.mobile.android.tasks.DeleteAllDataItemsTask;
-import org.dieschnittstelle.mobile.android.tasks.UpdateDataItemTaskWithFuture;
 
-import java.net.InetAddress;
-import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -172,6 +165,8 @@ public class LoginActivity extends AppCompatActivity {
 
         if (isMetered) {
 
+            crudOperations = new RoomDataItemCRUDOperationsImpl(this);
+
             Toast.makeText(this, "No connection to firebase, using local database", Toast.LENGTH_LONG).show();
 
             Intent callLoginView = new Intent(LoginActivity.this, MainActivity.class);
@@ -180,6 +175,7 @@ public class LoginActivity extends AppCompatActivity {
             startActivityForResult(callLoginView, CALL_MAIN_ACTIVITY);
         } else {
             crudOperations = new FireBaseCRUDOperations();
+
 
         }
 
