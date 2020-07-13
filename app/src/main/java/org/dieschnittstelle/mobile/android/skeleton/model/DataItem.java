@@ -177,11 +177,11 @@ public class DataItem implements Serializable {
 
     public boolean isExpired() {
         try {
-            if(expiry == 0){
+            if(dateTime == 0){
                 return false;
             }
             long now = System.currentTimeMillis();
-            long diff = expiry - now;
+            long diff = dateTime - now;
             if(diff < 0){
                 return true;
             }
