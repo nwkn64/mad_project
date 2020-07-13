@@ -6,24 +6,26 @@
 
     <data>
 
+        <import type ="android.graphics.Color"/>
         <variable
             name="item"
-            type="org.dieschnittstelle.mobile.android.skeleton.model.DataItem" />
+            type="model.DataItem"/>
+            <variable
+                name="controller"
+            type="org.dieschnittstelle.mobile.android.skeleton.MainActivity"
+        android:background="@{item.isExpired? Color.rgb(165,14,0):Color.WHITE" />
 
-        <variable
-            name="controller"
-            type="org.dieschnittstelle.mobile.android.skeleton.MainActivity" />
     </data>
-
-
-
-
 
      <LinearLayout
              android:layout_width="match_parent"
              android:layout_height="wrap_content"
              android:orientation="horizontal"
-             app:layout_constraintTop_toTopOf="parent">
+             app:layout_constraintTop_toTopOf="parent"
+         >
+
+
+
 
 
              <CheckBox

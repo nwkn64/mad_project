@@ -172,4 +172,26 @@ public class DataItem implements Serializable {
         }
         return this;
     }
+
+    //ueberfaelligkeit datum
+
+    public boolean isExpired() {
+        try {
+            if(expiry == 0){
+                return false;
+            }
+            long now = System.currentTimeMillis();
+            long diff = expiry - now;
+            if(diff < 0){
+                return true;
+            }
+            else {
+                return false;
+            }
+        } catch(Exception e){
+            return false;
+        }
+    }
 }
+
+
