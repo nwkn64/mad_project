@@ -2,6 +2,8 @@ package org.dieschnittstelle.mobile.android.skeleton;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -10,17 +12,34 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.databinding.DataBindingUtil;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.BaseTransientBottomBar;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.android.material.tabs.TabLayout;
 
 import org.dieschnittstelle.mobile.android.skeleton.databinding.ActivityMainListitemBinding;
 import org.dieschnittstelle.mobile.android.skeleton.model.DataItem;
@@ -39,18 +58,37 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
     public static final int CALL_DETAIL_VIEW_FOR_NEW_ITEM = 0;
-    public static final int CALL_DETAIL_VIEW_FOR_EXISTING_ITEM = 1;
+    public static final int CALL_DETAIL_VIEW_FOR_EXISTING_ITEM = 0;
 
     private ViewGroup listView;
+    private ViewGroup mapsView;
+    private GoogleMap map;
+
     private ArrayAdapter<DataItem> listViewAdapter;
     //neue Liste die sortiert werden kann
     private List<DataItem> itemsList = new ArrayList<>();
     private FloatingActionButton fab;
     private ProgressBar progressBar;
-
     private IDataItemCRUDOperations crudOperations;
+    private boolean locationPermissionGranted;
+    private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
+
+    private final LatLng defaultLocation = new LatLng(-33.8523341, 151.2106085);
+    private static final int DEFAULT_ZOOM = 15;
+
+    private CameraPosition cameraPosition;
+    private LatLng marker;
+    private PlacesClient placesClient;
+
+    private FusedLocationProviderClient fusedLocationProviderClient;
+
+    private Location lastKnownLocation;
+
+
+    private static final String KEY_CAMERA_POSITION = "camera_position";
+    private static final String KEY_LOCATION = "location";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,8 +96,133 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
 
+
         this.initialiseView();
 
+
+
+    }
+
+    @Override
+    public void onMapReady(GoogleMap map) {
+        System.out.println("hier");
+
+        this.map = map;
+
+        itemsList.forEach(obj -> {
+            if (obj.getGeoCoordinates() != null) {
+                Double geoLat = Double.parseDouble(obj.getGeoCoordinates().split(",")[0]);
+                Double geoLong = Double.parseDouble(obj.getGeoCoordinates().split(",")[1]);
+
+                System.out.println("geo");
+                System.out.println(geoLat);
+                LatLng sydney = new LatLng(geoLat, geoLong);
+                map.addMarker(new MarkerOptions()
+                        .position(sydney)
+                        .title("Marker in Sydney"));
+            }
+
+
+        });
+
+
+        this.map.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
+
+            @Override
+            public View getInfoWindow(Marker arg0) {
+                return null;
+            }
+
+
+            @Override
+            public View getInfoContents(Marker marker) {
+                View infoWindow = getLayoutInflater().inflate(R.layout.custom_info_contents,
+                        (FrameLayout) findViewById(R.id.map), false);
+
+                TextView title = infoWindow.findViewById(R.id.title);
+                title.setText(marker.getTitle());
+
+                TextView snippet = infoWindow.findViewById(R.id.snippet);
+                snippet.setText(marker.getSnippet());
+
+                return infoWindow;
+            }
+
+
+        });
+
+
+        getLocationPermission();
+
+        updateLocationUI();
+
+        getDeviceLocation();
+
+
+        map.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+
+            @Override
+            public void onMapClick(LatLng latLng) {
+                MarkerOptions markerOptions = new MarkerOptions();
+                markerOptions.position(latLng);
+
+
+                markerOptions.title(latLng.latitude + " : " + latLng.longitude);
+
+                map.clear();
+
+                map.animateCamera(CameraUpdateFactory.newLatLng(latLng));
+
+                map.addMarker(markerOptions);
+            }
+
+
+        });
+
+
+    }
+
+    private void getDeviceLocation() {
+
+        try {
+            if (locationPermissionGranted) {
+                Task<Location> locationResult = fusedLocationProviderClient.getLastLocation();
+                locationResult.addOnCompleteListener(this, new OnCompleteListener<Location>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Location> task) {
+                        if (task.isSuccessful()) {
+                            // Set the map's camera position to the current location of the device.
+                            lastKnownLocation = task.getResult();
+                            if (lastKnownLocation != null) {
+                                map.moveCamera(CameraUpdateFactory.newLatLngZoom(
+                                        new LatLng(lastKnownLocation.getLatitude(),
+                                                lastKnownLocation.getLongitude()), DEFAULT_ZOOM));
+                            }
+                        } else {
+                            Log.d("MainActivity", "Current location is null. Using defaults.");
+                            Log.e("MainActivity", "Exception: %s", task.getException());
+                            map.moveCamera(CameraUpdateFactory
+                                    .newLatLngZoom(defaultLocation, DEFAULT_ZOOM));
+                            map.getUiSettings().setMyLocationButtonEnabled(false);
+                        }
+                    }
+                });
+            }
+        } catch (SecurityException e) {
+            Log.e("Exception: %s", e.getMessage(), e);
+        }
+    }
+
+    private void getLocationPermission() {
+        if (ContextCompat.checkSelfPermission(this.getApplicationContext(),
+                android.Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            locationPermissionGranted = true;
+        } else {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
+                    PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
+        }
     }
 
     private void initialiseView() {
@@ -68,7 +231,7 @@ public class MainActivity extends AppCompatActivity {
         Bundle extras = this.getIntent().getExtras();
         String id = extras.getString("crudOperations");
 
-        if (id == null || id.equals("0") ) {
+        if (id.equals("0")) {
             this.crudOperations = new FireBaseCRUDOperations();
 
         } else {
@@ -78,9 +241,44 @@ public class MainActivity extends AppCompatActivity {
 
 
         this.listView = this.findViewById(R.id.listView);
+        this.mapsView = this.findViewById(R.id.mapsView);
+
         this.fab = this.findViewById(R.id.fab);
         this.progressBar = this.findViewById(R.id.progressBar);
 
+        TabLayout tabView = this.findViewById(R.id.tabs);
+
+        tabView.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                switch (tab.getPosition()) {
+                    case 0:
+                        listView.setVisibility(View.VISIBLE);
+                        mapsView.setVisibility(View.INVISIBLE);
+                    case 1:
+
+                        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                                .findFragmentById(R.id.mapsView);
+                        mapFragment.getMapAsync(MainActivity.this::onMapReady);
+
+                        mapsView.setVisibility(View.VISIBLE);
+                        listView.setVisibility(View.INVISIBLE);
+
+                }
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+
+            }
+
+
+        });
         this.listViewAdapter = new ArrayAdapter<DataItem>(this, R.layout.activity_main__listitem, R.id.itemName, itemsList) {
             @NonNull
             @Override
@@ -113,6 +311,8 @@ public class MainActivity extends AppCompatActivity {
 
 
         synchronize(true);
+
+
 
     }
 
@@ -163,7 +363,7 @@ public class MainActivity extends AppCompatActivity {
 
                     }).execute();
         } else {
-            if(initialLoad){
+            if (initialLoad) {
                 new ReadAllDataItemsTask(progressBar,
                         crudOperations,
                         items -> {
@@ -249,7 +449,7 @@ public class MainActivity extends AppCompatActivity {
     //Sortierung
     private void sorteListAndFocusItem(DataItem item) {
         this.itemsList.sort(Comparator.
-                comparing(DataItem::isChecked)
+                comparing(DataItem::isChecked) //falsche Methode?
                 .thenComparing(DataItem::getName));
         this.listViewAdapter.notifyDataSetChanged();
 
@@ -258,6 +458,25 @@ public class MainActivity extends AppCompatActivity {
             ((ListView) this.listView).smoothScrollToPosition(this.listViewAdapter.getPosition(item));
         }
 
+    }
+
+    private void updateLocationUI() {
+        if (map == null) {
+            return;
+        }
+        try {
+            if (locationPermissionGranted) {
+                map.setMyLocationEnabled(true);
+                map.getUiSettings().setMyLocationButtonEnabled(true);
+            } else {
+                map.setMyLocationEnabled(false);
+                map.getUiSettings().setMyLocationButtonEnabled(false);
+                lastKnownLocation = null;
+                getLocationPermission();
+            }
+        } catch (SecurityException e) {
+            Log.e("Exception: %s", e.getMessage());
+        }
     }
 
     private void onListItemSelected(DataItem item) {
@@ -305,39 +524,51 @@ public class MainActivity extends AppCompatActivity {
                 existingItem.setFavourite(changedItem.isFavourite());
                 existingItem.setDescription(changedItem.getDescription());
                 existingItem.setContacts(changedItem.getContacts());
-                existingItem.setLocation(changedItem.getLocation());
-                existingItem.setGeoCoordinates(changedItem.getGeoCoordinates());
                 this.listViewAdapter.notifyDataSetChanged();
                 //Item das geupdated wurde soll sortiert werden
                 this.sorteListAndFocusItem(existingItem);
 
             } else {
                 showFeedbackMessage("Updated" + changedItem.getName() + "Updated Item cannot be found");
+
             }
         } else {
             showFeedbackMessage("Updated" + changedItem.getName() + "Item could not be updated in database");
+
         }
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        if (requestCode == CALL_DETAIL_VIEW_FOR_NEW_ITEM) {
-            if (resultCode == Activity.RESULT_OK) {
-                DataItem item = (DataItem) data.getSerializableExtra(DetailviewActivity.ARG_ITEM);
-                createItemAndAddItToList(item);
-            } else if (resultCode == Activity.RESULT_CANCELED) {
-                showFeedbackMessage(" item name was canceled");
-            } else {
-                showFeedbackMessage("no item name received, what's wrong?");
-            }
-        } else if (requestCode == CALL_DETAIL_VIEW_FOR_EXISTING_ITEM) {
-            if (resultCode == Activity.RESULT_OK) {
-                DataItem item = (DataItem) data.getSerializableExtra(DetailviewActivity.ARG_ITEM);
-                updateItemAndUpdateList(item);
-            }
-        } else {
-            super.onActivityResult(requestCode, resultCode, data);
 
+
+        if (resultCode == 5) {
+            DataItem item = (DataItem) data.getSerializableExtra(DetailviewActivity.ARG_ITEM);
+            crudOperations.deleteDataItem(item.getId());
+            this.listViewAdapter.remove(item);
+            this.listViewAdapter.notifyDataSetChanged();
+            //Item das geupdated wurde soll sortiert werden
+            this.sorteListAndFocusItem(null);
+
+        } else {
+            if (requestCode == CALL_DETAIL_VIEW_FOR_NEW_ITEM) {
+                if (resultCode == Activity.RESULT_OK) {
+                    DataItem item = (DataItem) data.getSerializableExtra(DetailviewActivity.ARG_ITEM);
+                    createItemAndAddItToList(item);
+                } else if (resultCode == Activity.RESULT_CANCELED) {
+                    showFeedbackMessage(" item name was canceled");
+                } else {
+                    showFeedbackMessage("no item name received, what's wrong?");
+                }
+            } else if (requestCode == CALL_DETAIL_VIEW_FOR_EXISTING_ITEM) {
+                if (resultCode == Activity.RESULT_OK) {
+                    DataItem item = (DataItem) data.getSerializableExtra(DetailviewActivity.ARG_ITEM);
+                    updateItemAndUpdateList(item);
+                }
+            } else {
+                super.onActivityResult(requestCode, resultCode, data);
+
+            }
         }
     }
 

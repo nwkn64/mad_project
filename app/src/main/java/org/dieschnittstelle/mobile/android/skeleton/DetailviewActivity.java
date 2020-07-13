@@ -8,7 +8,6 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -109,7 +108,7 @@ public class DetailviewActivity extends AppCompatActivity {
         Intent returnData = new Intent();
         returnData.putExtra(ARG_ITEM, item);
 
-        setResult(Activity.RESULT_OK, returnData);
+        setResult(AppCompatActivity.RESULT_OK, returnData);
         finish();
     }
 

@@ -1,8 +1,7 @@
 package org.dieschnittstelle.mobile.android.tasks;
 
 
-import android.app.Activity;
-import android.content.Context;
+import androidx.appcompat.app.AppCompatActivity;
 
 import org.dieschnittstelle.mobile.android.skeleton.model.DataItem;
 import org.dieschnittstelle.mobile.android.skeleton.model.IDataItemCRUDOperations;
@@ -12,9 +11,9 @@ import java.util.concurrent.CompletableFuture;
 public class UpdateDataItemTaskWithFuture {
 
     private IDataItemCRUDOperations crudOperations;
-    private Activity owner;
+    private AppCompatActivity owner;
 
-    public UpdateDataItemTaskWithFuture(Activity owner, IDataItemCRUDOperations crudOperations) {
+    public UpdateDataItemTaskWithFuture(AppCompatActivity owner, IDataItemCRUDOperations crudOperations) {
         this.owner = owner;
         this.crudOperations = crudOperations;
     }
