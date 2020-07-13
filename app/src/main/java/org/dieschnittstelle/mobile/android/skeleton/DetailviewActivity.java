@@ -53,6 +53,9 @@ public class DetailviewActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         binding = DataBindingUtil.setContentView(this, R.layout.activity_detailview);
 
+        Bundle extras = this.getIntent().getExtras();
+//        String id = extras.getString("crudOperations");
+
 
         FloatingActionButton fab = binding.getRoot().findViewById(R.id.fab);
         locationBtn = binding.getRoot().findViewById(R.id.locationBtn);
@@ -106,9 +109,11 @@ public class DetailviewActivity extends AppCompatActivity {
 
     public void onSaveItem(View view) {
         Intent returnData = new Intent();
-        returnData.putExtra(ARG_ITEM, item);
 
-        setResult(AppCompatActivity.RESULT_OK, returnData);
+        returnData.putExtra(ARG_ITEM, this.item);
+
+        this.setResult(Activity.RESULT_OK, returnData);
+
         finish();
     }
 
@@ -173,7 +178,11 @@ public class DetailviewActivity extends AppCompatActivity {
         }
         showContactDetails(contactid, CONTACT_PERMISSION_RESULT);
     }
+//modifiziert
 
+    public void onRequestPermissionResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResult) {
+
+    }
 
     private void showContactDetails(Uri contactid, int requestCode) {
         int hasReadContactsPermission = checkSelfPermission(Manifest.permission.READ_CONTACTS);
