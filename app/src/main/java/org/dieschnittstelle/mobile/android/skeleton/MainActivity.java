@@ -25,6 +25,7 @@ import androidx.core.content.ContextCompat;
 import androidx.databinding.DataBindingUtil;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -35,6 +36,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.BaseTransientBottomBar;
@@ -60,7 +62,7 @@ import javax.annotation.Nullable;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
     public static final int CALL_DETAIL_VIEW_FOR_NEW_ITEM = 0;
-    public static final int CALL_DETAIL_VIEW_FOR_EXISTING_ITEM = 0;
+    public static final int CALL_DETAIL_VIEW_FOR_EXISTING_ITEM = 1;
 
     private ViewGroup listView;
     private ViewGroup mapsView;
@@ -71,6 +73,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private List<DataItem> itemsList = new ArrayList<>();
     private FloatingActionButton fab;
     private ProgressBar progressBar;
+    private boolean sorting_fav_date = true;
+
     private IDataItemCRUDOperations crudOperations;
     private boolean locationPermissionGranted;
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
@@ -96,9 +100,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         setContentView(R.layout.activity_main);
 
 
-
         this.initialiseView();
-
 
 
     }
@@ -114,12 +116,24 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 Double geoLat = Double.parseDouble(obj.getGeoCoordinates().split(",")[0]);
                 Double geoLong = Double.parseDouble(obj.getGeoCoordinates().split(",")[1]);
 
-                System.out.println("geo");
-                System.out.println(geoLat);
-                LatLng sydney = new LatLng(geoLat, geoLong);
+                LatLng geoPos = new LatLng(geoLat, geoLong);
                 map.addMarker(new MarkerOptions()
-                        .position(sydney)
-                        .title("Marker in Sydney"));
+                        .position(geoPos)
+                        .title(String.valueOf(obj.getId())));
+                map.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+                    @Override
+                    public boolean onMarkerClick(Marker marker) {
+
+                        System.out.println(marker.getId());
+
+                        itemsList.forEach(obj -> {
+                            if(obj.getId() == Long.parseLong(marker.getId())){
+                                onListItemSelected(obj);
+                            }
+                        });
+                        return false;
+                    }
+                });
             }
 
 
@@ -253,16 +267,32 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             public void onTabSelected(TabLayout.Tab tab) {
                 switch (tab.getPosition()) {
                     case 0:
+
+
                         listView.setVisibility(View.VISIBLE);
+
                         mapsView.setVisibility(View.INVISIBLE);
+
+
                     case 1:
 
-                        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                                .findFragmentById(R.id.mapsView);
-                        mapFragment.getMapAsync(MainActivity.this::onMapReady);
+
+                        listView.setVisibility(View.INVISIBLE);
+
 
                         mapsView.setVisibility(View.VISIBLE);
-                        listView.setVisibility(View.INVISIBLE);
+
+
+                        Places.initialize(getApplicationContext(), "AIzaSyB3rlEAF2-E_c8dxbMz3tN60h3Aw-1SEZ0");
+                        placesClient = Places.createClient(MainActivity.this);
+
+                        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(MainActivity.this);
+
+
+                        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                                .findFragmentById(R.id.map);
+                        mapFragment.getMapAsync(MainActivity.this);
+
 
                 }
             }
@@ -312,8 +342,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         synchronize(true);
 
-
-
     }
 
     private void synchronize(Boolean initialLoad) {
@@ -348,11 +376,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                                     roomCrud,
                                                     progressBar,
                                                     created -> {
+                                                        this.listViewAdapter.clear();
+
                                                         this.listViewAdapter.add(created);
                                                         sorteListAndFocusItem(null);
                                                         //Damit neues Item sortiert werden kann
                                                     }).execute(dat);
                                         });
+                                        this.listViewAdapter.clear();
+
                                         listViewAdapter.addAll(fireBaseItems);
                                         //ruft nach starten direkt die Sortierung auf
 
@@ -392,8 +424,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             case R.id.synchronize:
                 synchronize(false);
                 return true;
+            case R.id.FavouriteDate:
+                sorting_fav_date = true;
+                sorteListAndFocusItem(null);
+                return true;
+            case R.id.DateFavourite:
+                sorting_fav_date = false;
+                sorteListAndFocusItem(null);
+                return true;
             default:
-                return super.onCreateOptionsMenu((Menu) item);
+                return super.onOptionsItemSelected(item);
         }
     }
 
@@ -448,10 +488,29 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     //Sortierung
     private void sorteListAndFocusItem(DataItem item) {
-        this.itemsList.sort(Comparator.
-                comparing(DataItem::isChecked) //falsche Methode?
-                .thenComparing(DataItem::getName));
+
+        // instead of sorting the itemsList, we call sort on the listViewAdapter, to only change
+        // the displayed order, not the actual order.
+
+        if (sorting_fav_date) {
+            this.listViewAdapter.sort(Comparator.
+                    comparing(DataItem::isChecked)
+                    .thenComparing(DataItem::isFavourite)
+                    .thenComparing(DataItem::getDateTime)
+                    .thenComparing(DataItem::getTimeTime)
+                    .thenComparing(DataItem::getName));
+
+        } else {
+            this.listViewAdapter.sort(Comparator.
+                    comparing(DataItem::isChecked)
+                    .thenComparing(DataItem::getDateTime)
+                    .thenComparing(DataItem::getTimeTime)
+                    .thenComparing(DataItem::isFavourite)
+                    .thenComparing(DataItem::getName));
+        }
+
         this.listViewAdapter.notifyDataSetChanged();
+
 
 //Überprüft ob ein Item übergeben wurde
         if (item != null) {
@@ -524,6 +583,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 existingItem.setFavourite(changedItem.isFavourite());
                 existingItem.setDescription(changedItem.getDescription());
                 existingItem.setContacts(changedItem.getContacts());
+                existingItem.setDate(changedItem.getDate());
+                existingItem.setDateTime(changedItem.getDateTime());
+                existingItem.setTime(changedItem.getTime());
+                existingItem.setTimeTime(changedItem.getTimeTime());
                 this.listViewAdapter.notifyDataSetChanged();
                 //Item das geupdated wurde soll sortiert werden
                 this.sorteListAndFocusItem(existingItem);
@@ -567,6 +630,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
             } else {
                 super.onActivityResult(requestCode, resultCode, data);
+                System.out.println(resultCode);
+                System.out.println(requestCode);
 
             }
         }
@@ -588,4 +653,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     this.sorteListAndFocusItem(item); //feedbackmessage auch nach sortierung
                 });
     }
+
+
 }

@@ -69,6 +69,40 @@ public class DataItem implements Serializable {
 
     private boolean favourite;
 
+    private String date;
+    private long dateTime = 0;
+    private String time;
+    private long timeTime = 0;
+
+    public String getDate() {
+        return date;
+    }
+    public long getDateTime() {
+        return dateTime;
+    }
+
+    public void setDate(String date) {
+        this.date = date;
+    }
+    public void setDateTime(long datetime) {
+        this.dateTime = datetime;
+    }
+
+    public String getTime() {
+        return time;
+    }
+
+    public void setTimeTime (long timetime){
+        timeTime = timetime;
+    }
+    public long getTimeTime() {
+        return timeTime;
+    }
+
+    public void setTime(String time) {
+        this.time = time;
+    }
+
     @Ignore
     private List<String> contacts = new ArrayList<>();
 

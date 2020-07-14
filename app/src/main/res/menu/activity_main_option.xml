@@ -9,7 +9,6 @@
 
 
     <item
-        android:id="@+id/doSomethingelse"
-
-        android:title="SOMETHING ELSE" />
+        android:id="@+id/deleteItem"
+        android:title="Delete Item" />
 </menu>

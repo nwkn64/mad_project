@@ -2,20 +2,31 @@ package org.dieschnittstelle.mobile.android.skeleton;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.text.format.DateFormat;
+import android.text.format.DateUtils;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.TimePicker;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -30,6 +41,8 @@ import org.dieschnittstelle.mobile.android.skeleton.databinding.ActivityDetailvi
 import org.dieschnittstelle.mobile.android.skeleton.model.DataItem;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
 
 public class DetailviewActivity extends AppCompatActivity {
 
@@ -42,9 +55,24 @@ public class DetailviewActivity extends AppCompatActivity {
     public static final int LOCATION_RESULT = 8;
     public static final int CONTACT_PERMISSION_RESULT = 9;
 
+    //Datepicker1
+    //Elemente des Datepickers
+    Button btnTime, btnDate;
+    TextView tvTime, tvDate;
+
+    //Dialoge Date Picker1
+    TimePickerDialog timePickerDialog;
+    DatePickerDialog datePickerDialog;
+
+    Calendar calendar = Calendar.getInstance();
 
     private DataItem item;
     private ActivityDetailviewBinding binding;
+
+
+    private ArrayAdapter<String> contactsViewAdapter;
+    private View contactList;
+
 
     private static Button locationBtn;
 
@@ -52,6 +80,12 @@ public class DetailviewActivity extends AppCompatActivity {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = DataBindingUtil.setContentView(this, R.layout.activity_detailview);
+
+
+        btnTime = findViewById(R.id.BtnTime);
+        btnDate = findViewById(R.id.BtnDate);
+        tvTime = findViewById(R.id.TvTime);
+        tvDate = findViewById(R.id.TvDate);
 
 
         FloatingActionButton fab = binding.getRoot().findViewById(R.id.fab);
@@ -92,6 +126,34 @@ public class DetailviewActivity extends AppCompatActivity {
 
         this.showFeedbackMessage("Item has contacts" + item.getContacts());
 
+
+        if (item.getContacts().size() > 0) {
+            List<String> contactNames = new ArrayList<String>();
+
+            item.getContacts().forEach(obj -> {
+
+
+                Cursor cursor = getContentResolver().query(Uri.parse(obj), null, null, null, null);
+                if (cursor != null && cursor.moveToFirst()) {
+
+                    String contactName = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
+                    contactNames.add(contactName);
+
+                }
+            });
+
+
+            ArrayAdapter<String> itemsAdapter =
+                    new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, contactNames);
+            ListView listView = (ListView) findViewById(R.id.contactsList);
+            listView.setAdapter(itemsAdapter);
+
+        }
+
+
+        binding.setController(this);
+
+
         if (item.getContacts() != null && item.getContacts().size() > 0) {
             item.getContacts().forEach(contactUriString -> {
                 this.showContactDetails(Uri.parse(contactUriString), CONTACT_PERMISSION_RESULT);
@@ -102,13 +164,23 @@ public class DetailviewActivity extends AppCompatActivity {
 
         System.out.println(item.getGeoCoordinates());
 
+
+        btnTime.setOnClickListener((view) -> {
+            onClick(view);
+        });
+
+        btnDate.setOnClickListener((view) -> {
+            onClick(view);
+        });
     }
 
     public void onSaveItem(View view) {
         Intent returnData = new Intent();
-        returnData.putExtra(ARG_ITEM, item);
 
-        setResult(AppCompatActivity.RESULT_OK, returnData);
+        returnData.putExtra(ARG_ITEM, this.item);
+
+        this.setResult(Activity.RESULT_OK, returnData);
+
         finish();
     }
 
@@ -128,13 +200,40 @@ public class DetailviewActivity extends AppCompatActivity {
             case R.id.addContact:
                 selectAndAddContact();
                 return true;
-            case R.id.doSomethingelse:
-                Toast.makeText(this, "Something else was selected...",
-                        Toast.LENGTH_SHORT).show();
-                return true;
+            case R.id.deleteItem:
+
+
+                DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        switch (which) {
+                            case DialogInterface.BUTTON_POSITIVE:
+                                resultDelete();
+                                break;
+
+                            case DialogInterface.BUTTON_NEGATIVE:
+                                break;
+                        }
+                    }
+                };
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setMessage("Are you sure?").setPositiveButton("Yes", dialogClickListener)
+                        .setNegativeButton("No", dialogClickListener).show();
 
         }
         return false;
+    }
+
+
+    private void resultDelete() {
+        Intent returnData = new Intent();
+
+        returnData.putExtra(ARG_ITEM, this.item);
+
+        this.setResult(5, returnData);
+
+        finish();
     }
 
     private void selectAndAddContact() {
@@ -148,8 +247,7 @@ public class DetailviewActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         if (requestCode == CALL_CONTACT_PICKER && resultCode == Activity.RESULT_OK) {
             addSelectedContactToContacts(data.getData());
-        }
-        else if (requestCode == LOCATION_RESULT && resultCode == Activity.RESULT_OK) {
+        } else if (requestCode == LOCATION_RESULT && resultCode == Activity.RESULT_OK) {
             // The "MapsActivity" finished and we parse the result.
             String loc = data.getStringExtra(ARG_LOCATION);
             String coor = data.getStringExtra(ARG_COORDS);
@@ -166,14 +264,20 @@ public class DetailviewActivity extends AppCompatActivity {
     private void addSelectedContactToContacts(Uri contactid) {
 
         if (item.getContacts() != null) {
-            item.setContacts(new ArrayList<>());
+            List<String> contacts = item.getContacts();
+            contacts.add(String.valueOf(contactid));
+            item.setContacts(contacts);
         }
         if (item.getContacts().indexOf(contactid.toString()) == -1) {
             item.getContacts().add(contactid.toString());
         }
         showContactDetails(contactid, CONTACT_PERMISSION_RESULT);
+
     }
 
+    public void onRequestPermissionResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResult) {
+
+    }
 
     private void showContactDetails(Uri contactid, int requestCode) {
         int hasReadContactsPermission = checkSelfPermission(Manifest.permission.READ_CONTACTS);
@@ -188,16 +292,63 @@ public class DetailviewActivity extends AppCompatActivity {
             requestPermissions(new String[]{Manifest.permission.READ_CONTACTS}, requestCode);
             return;
         } else {
-            showFeedbackMessage("Contact Permission have been franted!");
+            showFeedbackMessage("Contact Permission have been granted!");
         }
         Cursor cursor = getContentResolver().query(contactid, null, null, null, null);
         if (cursor != null && cursor.moveToFirst()) {
             String contactName = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
             String internalContactId = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts._ID));
 
+
             showFeedbackMessage("Got result from Contact picker" + contactName + " with id " + internalContactId);
-        } else {
-            showFeedbackMessage("The cursor was null - cache problem?");
+
+
+            Cursor phoneCursor = getContentResolver().query(
+                    ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                    null,
+                    ContactsContract.CommonDataKinds.Phone._ID + "= ?",
+                    new String[]{internalContactId},
+                    null,
+                    null
+            );
+
+            while (phoneCursor.moveToNext()) {
+                String number = phoneCursor.getString(phoneCursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                int phoneNumberType = phoneCursor.getInt(phoneCursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DATA2));
+
+                if (phoneNumberType == ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE) {
+                    Log.i("DetailViewActivity", "found mobile Number: " + number);
+                } else {
+                    Log.i("DetailViewActivity", "found other Number: " + number);
+
+                }
+            }
+            Log.i("DetailViewActivity", "no further phone numbers found");
+
+            Cursor emailCursor = getContentResolver().query(
+                    ContactsContract.CommonDataKinds.Email.CONTENT_URI,
+                    null,
+                    ContactsContract.CommonDataKinds.Email.CONTACT_ID + "= ?",
+                    new String[]{internalContactId},
+                    null,
+                    null
+            );
+
+            while (emailCursor.moveToNext()) {
+                String email = emailCursor.getString(emailCursor.getColumnIndex(ContactsContract.CommonDataKinds.Email.ADDRESS));
+                Log.i("DetailViewActivity", "email is" + email);
+
+            }
+            Log.i("DetailViewActivity", "no further email found");
+
+         /*   if (item.getContacts() == null) {
+                item.setContacts(new ArrayList<>());
+            }
+            if (item.getContacts().indexOf(internalContactId) == -1) {
+                item.getContacts().add(contactid.toString());
+            }
+
+          */
         }
     }
 
@@ -205,7 +356,69 @@ public class DetailviewActivity extends AppCompatActivity {
         Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
 
     }
+
+
+    //Datum und Uhrzeit Date1
+    public void onClick(View v) {
+        calendar = Calendar.getInstance();
+        switch (v.getId()) {
+            case R.id.BtnTime: {
+
+                // When a time was set before:
+                if (item.getTimeTime() > 0) {
+                    calendar.setTimeInMillis(item.getTimeTime());
+                }
+                timePickerDialog = new TimePickerDialog(DetailviewActivity.this, new TimePickerDialog.OnTimeSetListener() {
+                    @Override
+                    public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
+                        Calendar timeCalendar = Calendar.getInstance();
+                        timeCalendar.set(Calendar.HOUR_OF_DAY, hourOfDay);
+                        timeCalendar.set(Calendar.MINUTE, minute);
+                        String timestring = DateUtils.formatDateTime(DetailviewActivity.this, timeCalendar.getTimeInMillis(), DateUtils.FORMAT_SHOW_TIME);
+                        item.setTime(timestring);
+                        item.setTime(timestring);
+                        item.setTimeTime(timeCalendar.getTimeInMillis());
+                        tvTime.setText("Uhrzeit:" + timestring);
+                    }
+                    //Voreinstellung aktuelle Uhrzeit
+                    //Zeitzone nach Location
+                }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), DateFormat.is24HourFormat(DetailviewActivity.this));
+
+                timePickerDialog.show();
+                break;
+            }
+
+            case R.id.BtnDate:
+
+                // When a date was set before:
+                if (item.getDateTime() > 0) {
+                    calendar.setTimeInMillis(item.getDateTime());
+                }
+                datePickerDialog = new DatePickerDialog(DetailviewActivity.this, new DatePickerDialog.OnDateSetListener() {
+                    @Override
+                    public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
+                        Calendar dateCalendar = Calendar.getInstance();
+
+                        dateCalendar.set(Calendar.YEAR, year);
+                        dateCalendar.set(Calendar.MONTH, month);
+                        dateCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+
+                        String dateString = DateUtils.formatDateTime(DetailviewActivity.this, dateCalendar.getTimeInMillis(), DateUtils.FORMAT_SHOW_DATE);
+                        item.setDate(dateString);
+                        item.setDateTime(dateCalendar.getTimeInMillis());
+
+                        tvDate.setText("Datum:" + dateString);
+                    }
+                },
+                        calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
+                datePickerDialog.show();
+                break;
+        }
+    }
 }
+
+
+
 
 
 
